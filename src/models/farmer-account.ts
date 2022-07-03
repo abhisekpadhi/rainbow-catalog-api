@@ -1,7 +1,11 @@
 import {z} from 'zod';
 import {BaseDTO} from './baseDTO';
 
-export const FarmSchema = z.object({
+export const BaseSchema = z.object({
+    id: z.number().default(0),
+});
+
+export const FarmSchema = BaseSchema.extend({
     farmerId: z.number().default(0),
     farmName: z.string().max(48).default(''),
     farmLocation: z.string().max(64).default('')
@@ -15,7 +19,8 @@ export class Farm extends BaseDTO<IFarm> {
     }
 }
 
-export const FarmerSchema = z.object({
+export const FarmerSchema = BaseSchema.extend({
+    phone: z.string().max(10).default(''),
     farmerName: z.string().max(48).default(''),
 });
 
@@ -27,7 +32,7 @@ export class Farmer extends BaseDTO<IFarmer> {
     }
 }
 
-export const FarmInventorySchema = z.object({
+export const FarmInventorySchema = BaseSchema.extend({
     farmId: z.number().default(0),
     priceInPaise: z.number().default(0),
     productId: z.number().default(0),
@@ -42,7 +47,7 @@ export class FarmInventory extends BaseDTO<IFarmInventory> {
 }
 
 
-export const FarmInventoryLedgerSchema = z.object({
+export const FarmInventoryLedgerSchema = BaseSchema.extend({
     farmId: z.number().default(0),
     productId: z.number().default(0),
     qty: z.number().default(0),
@@ -59,7 +64,7 @@ export class FarmInventoryLedger extends BaseDTO<IFarmInventoryLedger> {
     }
 }
 
-export const FarmPrefsSchema = z.object({
+export const FarmPrefsSchema = BaseSchema.extend({
     farmId: z.number().default(0),
     prefKey: z.string().max(48).default(''),
     prefValue: z.string().max(256).default(''),
@@ -73,7 +78,7 @@ export class FarmPrefs extends BaseDTO<IFarmPrefs> {
     }
 }
 
-export const ProductCatalogSchema = z.object({
+export const ProductCatalogSchema = BaseSchema.extend({
     productName: z.string().max(48).default(''),
     packSize: z.number().default(0),
     productDescription: z.string().max(256).default(''),

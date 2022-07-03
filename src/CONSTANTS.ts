@@ -11,11 +11,15 @@ export const CONSTANTS = Object.freeze({
         host            : 'localhost',
         user            : 'root',
         password        : 'password',
-        database        : 'insurance'
+        database        : 'rainbow-catalog'
     },
     tables: {
-        userAccount: 'userAccount',
-        userPrefs: 'userPreference',
+        farm: 'farm',
+        farmer: 'farmer',
+        farmInventory: 'farmInventory',
+        farmInventoryLedger: 'farmInventoryLedger',
+        farmPrefs: 'farmPrefs',
+        productCatalog: 'productCatalog',
     },
     response: {
         ok: { message: 'ok' },

@@ -1,7 +1,10 @@
 {
   "name": "rainbow-catalog",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "main.ts",
+  "private": true,
+  "repository": "git@github.com:nareninsurance/api.git",
+  "author": "Abhisek Padhi <avicool000@gmail.com>",
   "license": "MIT",
   "devDependencies": {
     "@types/aws-sdk": "^2.7.0",

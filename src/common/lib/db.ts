@@ -20,9 +20,14 @@ pool.on('release', function (connection) {
  * Getting & releasing connection is automatic.
  * This function only work is execute statements and coerce type on result.
  * @param stmt: sql statement
+ * @param queryFn: Query function
  */
-const run = async <T>(stmt: string): Promise<T> => {
-    return await query(stmt) as Promise<T>;
+const run = async <T>(stmt: string, queryFn?: (stmt: string) => Promise<unknown>): Promise<T> => {
+    let q = queryFn;
+    if (!queryFn) {
+        q = query;
+    }
+    return await q!(stmt) as Promise<T>;
 }
 
 /**
@@ -105,13 +110,14 @@ const updateTxn = async (stmts: string[]) => {
     const _query = util.promisify(conn.query).bind(conn)
     await beginTxn();
     try {
-        for (const stmt in stmts) {
-            await _query(stmt);
+        for (const stmt of stmts) {
+            // await _query(stmt);
+            await run(stmt, _query);
         }
         await commit();
         done = true
     } catch (e) {
-        LOG.info({message:'db transaction failed', stmts, error: e});
+        LOG.info({message:'db transaction failed, rolling back', stmts, error: e});
         await rollback();
     } finally {
         conn.release()
@@ -149,7 +155,7 @@ const updateAndGetTxn = async<K>(updateStmts: string[], readStmt: string, klass:
         }
         await commit();
     } catch (e) {
-        LOG.info({message:'db transaction failed', updateStmts, getStmt: readStmt, error: e});
+        LOG.info({message:'db transaction failed, rolling back', updateStmts, getStmt: readStmt, error: e});
         await rollback();
     } finally {
         conn.release()

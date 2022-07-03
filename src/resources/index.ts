@@ -1,1 +1,1 @@
-export {router as RootResource} from './hello';
+export {router as RootResource} from './api';
