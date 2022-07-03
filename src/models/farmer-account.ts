@@ -35,7 +35,8 @@ export class Farmer extends BaseDTO<IFarmer> {
 export const FarmInventorySchema = BaseSchema.extend({
     farmId: z.number().default(0),
     priceInPaise: z.number().default(0),
-    productId: z.number().default(0),
+    productId: z.string().max(36).default(''),
+    qty: z.number().default(0),
 });
 
 export type IFarmInventory = z.infer<typeof FarmInventorySchema>;
@@ -46,12 +47,13 @@ export class FarmInventory extends BaseDTO<IFarmInventory> {
     }
 }
 
+export const opSchema = z.enum(['add', 'remove']).default('add');
 
 export const FarmInventoryLedgerSchema = BaseSchema.extend({
     farmId: z.number().default(0),
-    productId: z.number().default(0),
+    productId: z.string().default(''),
     qty: z.number().default(0),
-    op: z.enum(['add', 'remove']).default('add'),
+    op: opSchema,
     opening: z.number().default(0),
     createdAt: z.number().default(0),
 });
@@ -99,4 +101,12 @@ export class ProductCatalog extends BaseDTO<IProductCatalog> {
         super(ProductCatalogSchema.parse(init));
     }
 }
+
+
+export interface IInventoryResponse extends IProductCatalog {
+    qty: number;
+}
+
+export const InventoryUpdateRequestSchema = FarmInventorySchema.extend({ op: opSchema });
+export type IInventoryUpdateRequest = z.infer<typeof InventoryUpdateRequestSchema>;
 
