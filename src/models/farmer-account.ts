@@ -80,15 +80,16 @@ export class FarmPrefs extends BaseDTO<IFarmPrefs> {
 
 export const ProductCatalogSchema = BaseSchema.extend({
     productName: z.string().max(48).default(''),
-    packSize: z.number().default(0),
+    packSize: z.string().max(32).default(''),
     productDescription: z.string().max(256).default(''),
     imageUrl: z.string().max(1024).default(''),
     grading: z.string().max(256).default(''),
     variant: z.string().max(256).default(''),
-    perishability: z.number().default(0),
+    perishability: z.string().max(32).default(''),
     logisticsNeed: z.string().max(32).default(''),
     coldChain: z.string().max(32).default(''),
-    idealDelTat: z.number().default(0),
+    idealDelTat: z.string().max(32).default(''),
+    skuId: z.string().max(36).default(''),
 });
 
 export type IProductCatalog = z.infer<typeof ProductCatalogSchema>;

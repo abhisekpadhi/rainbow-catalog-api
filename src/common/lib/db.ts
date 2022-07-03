@@ -142,8 +142,9 @@ const updateAndGetTxn = async<K>(updateStmts: string[], readStmt: string, klass:
     const connQuery = util.promisify(conn.query).bind(conn)
     await beginTxn();
     try {
-        for (const stmt in updateStmts) {
-            await connQuery(stmt);
+        for (const stmt of updateStmts) {
+            // await connQuery(stmt);
+            await run(stmt, connQuery);
         }
         const r = await connQuery(readStmt) as T[]
         if (r.length > 0) {

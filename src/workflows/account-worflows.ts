@@ -1,7 +1,9 @@
-import {Farm, IFarm, IFarmer, IFarmPrefs} from '../models/farmer-account';
+import {Farm, IFarm, IFarmer, IFarmPrefs, IProductCatalog, ProductCatalog} from '../models/farmer-account';
 import FarmerRepo from '../repository/farmer-repo';
 import FarmRepo from '../repository/farm-repo';
 import FarmPrefsRepo from '../repository/farm-prefs-repo';
+import {LOG} from '../common/lib/logger';
+import ProductCatalogRepo from '../repository/product-catalog-repo';
 
 export const login = async (payload: IFarmer) => {
     let farmer = await FarmerRepo.getByPhone(payload.phone)
@@ -50,4 +52,65 @@ export const getFarmPrefs = async (payload: {farmId: number}) => {
 export const updateFarmPrefs = async (payload: IFarmPrefs) => {
     await FarmPrefsRepo.updateFarmPrefs(payload);
     return "ok"
+}
+
+export const updateCatalog = async (row: any) => {
+    const product: Partial<IProductCatalog> = {}
+    if ('sku id' in row) {
+        // ignore rows with no sku id
+        if (row['sku id'].length === 0) {
+            return;
+        }
+        product.skuId = row['sku id'];
+    }
+    if ('crop name' in row) {
+        product.productName = row['crop name'];
+    }
+    if ('crop pic url' in row) {
+        product.imageUrl = row['crop pic url'];
+    }
+    if ('pack size' in row) {
+        product.packSize = row['pack size'];
+    }
+    if ('pack size' in row) {
+        product.packSize = row['pack size'];
+    }
+    if ('description' in row) {
+        product.productDescription = row['description']
+    }
+    if ('grade' in row) {
+        product.grading = row['grade']
+    }
+    let variant = '';
+    if ('Variety' in row) {
+        variant = variant + row['Variety'];
+    }
+    if ('variant' in row) {
+        variant = variant + row['variant'];
+    }
+    product.variant = variant;
+    if ('perishability (days)' in row) {
+        product.perishability = row['perishability (days)']
+    }
+    if ('logistics' in row) {
+        product.logisticsNeed = row['logistics'];
+    }
+    if ('cold chain req' in row) {
+        product.coldChain = row['cold chain req'];
+    }
+    if ('ideal del tat (day)' in row) {
+        product.idealDelTat = row['ideal del tat (day)']
+    }
+    LOG.info({product})
+    const obj = new ProductCatalog(product)
+    await ProductCatalogRepo.updateProduct(obj.toPlainObject()!)
+}
+
+export const getProduct = async (payload: { skuId: string }) => {
+    const res = await ProductCatalogRepo.getByProductId(payload.skuId)
+    if (res) {
+        return res.toPlainObject()!;
+    } else {
+        return null;
+    }
 }
