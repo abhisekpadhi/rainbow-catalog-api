@@ -1,0 +1,274 @@
+{
+	"info": {
+		"_postman_id": "90faa8aa-d04c-465a-9625-5978f9169e4d",
+		"name": "Rainbow catalog - ONDC",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "1827797"
+	},
+	"item": [
+		{
+			"name": "Login",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"farmerName\": \"anish\",\n    \"phone\": \"1111111111\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:3000/login",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get farms of farmer",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:3000/farms?farmerId=2",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"farms"
+					],
+					"query": [
+						{
+							"key": "farmerId",
+							"value": "2"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update farms of farmer",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"farmerId\": 2,\n    \"farmName\": \"aam bagaan\",\n    \"farmLocation\": \"22.222,11.222\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:3000/farms/update",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"farms",
+						"update"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get farm preferences",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:3000/farms/prefs?farmId=1",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"farms",
+						"prefs"
+					],
+					"query": [
+						{
+							"key": "farmId",
+							"value": "1"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update farm preferences",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"farmId\": 1,\n    \"prefKey\": \"paymentMethods\",\n    \"prefValue\": \"cash,upi,kisan credit card\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:3000/farms/prefs/update",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"farms",
+						"prefs",
+						"update"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Upload catalog master data",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "/Users/abhisek/Desktop/Farmer Inventory - Sheet2.csv"
+						}
+					]
+				},
+				"url": {
+					"raw": "localhost:3000/catalog/upload",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"catalog",
+						"upload"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get single SKU",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:3000/catalog/sku?skuId=2",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"catalog",
+						"sku"
+					],
+					"query": [
+						{
+							"key": "skuId",
+							"value": "2"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get farm inventory",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:3000/inventory?farmId=1",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"inventory"
+					],
+					"query": [
+						{
+							"key": "farmId",
+							"value": "1"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get farm inventory ledger",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:3000/inventory/ledger?farmId=1",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"inventory",
+						"ledger"
+					],
+					"query": [
+						{
+							"key": "farmId",
+							"value": "1"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update inventory",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"farmId\": 1,\n    \"priceInPaise\": 11200,\n    \"productId\": \"2\",\n    \"qty\": 2\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:3000/inventory/update",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"inventory",
+						"update"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
