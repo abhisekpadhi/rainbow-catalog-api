@@ -20,8 +20,8 @@ export const statusHandler = async (payload: any) => {
         context: payload.context,
         message: result
     };
-    LOG.info({msg: 'init handler response', body});
-    await bapCallback(PROTOCOL_CONTEXT.ON_INIT, body);
+    LOG.info({msg: 'status handler response', body});
+    await bapCallback(PROTOCOL_CONTEXT.ON_STATUS, body);
 }
 
 const handleCheckStatus = async (request: any) => {

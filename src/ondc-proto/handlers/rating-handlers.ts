@@ -22,7 +22,7 @@ export const ratingHandler = async (payload: any) => {
         message: result
     };
     LOG.info({msg: 'init handler response', body});
-    await bapCallback(PROTOCOL_CONTEXT.ON_INIT, body);
+    await bapCallback(PROTOCOL_CONTEXT.ON_RATING, body);
 }
 
 const handleAckRating = async (request: any) => {

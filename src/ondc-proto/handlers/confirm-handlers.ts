@@ -27,8 +27,8 @@ export const confirmHandler = async (payload: any) => {
         context: payload.context,
         message: result
     };
-    LOG.info({msg: 'init handler response', body});
-    await bapCallback(PROTOCOL_CONTEXT.ON_INIT, body);
+    LOG.info({msg: 'confirm handler response', body});
+    await bapCallback(PROTOCOL_CONTEXT.ON_CONFIRM, body);
 }
 
 const handleConfirm = async (request: any) => {

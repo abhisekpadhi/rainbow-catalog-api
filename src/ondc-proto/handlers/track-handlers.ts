@@ -24,7 +24,7 @@ export const trackHandler = async (payload: any) => {
         message: result
     };
     LOG.info({msg: 'init handler response', body});
-    await bapCallback(PROTOCOL_CONTEXT.ON_INIT, body);
+    await bapCallback(PROTOCOL_CONTEXT.ON_TRACK, body);
 }
 
 const handleTrack = async (request: any) => {

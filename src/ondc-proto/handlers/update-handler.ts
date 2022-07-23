@@ -20,8 +20,8 @@ export const updateHandler = async (payload: any) => {
         context: payload.context,
         message: result
     };
-    LOG.info({msg: 'init handler response', body});
-    await bapCallback(PROTOCOL_CONTEXT.ON_INIT, body);
+    LOG.info({msg: 'update handler response', body});
+    await bapCallback(PROTOCOL_CONTEXT.ON_UPDATE, body);
 }
 
 const handleUpdate = async (request: any) => {

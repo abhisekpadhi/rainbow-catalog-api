@@ -1,9 +1,17 @@
 import {cache} from '../common/clients';
 import {LOG} from '../common/lib/logger';
 import {CONSTANTS} from '../CONSTANTS';
+import {PROTOCOL_CONTEXT} from './models';
 import {searchHandler} from './handlers/search-handlers';
 import {selectHandler} from './handlers/select-handler';
-import {PROTOCOL_CONTEXT} from './models';
+import {initHandler} from './handlers/init-handler';
+import {confirmHandler} from './handlers/confirm-handlers';
+import {statusHandler} from './handlers/status-handlers';
+import {updateHandler} from './handlers/update-handler';
+import {cancelHandler} from './handlers/cancel-handlers';
+import {trackHandler} from './handlers/track-handlers';
+import {ratingHandler} from './handlers/rating-handlers';
+import {supportHandler} from './handlers/support-handlers';
 
 const subscriber = cache.duplicate();
 
@@ -20,6 +28,30 @@ const processTask = async (payload: ITaskPayload) => {
             break;
         case PROTOCOL_CONTEXT.SELECT:
             await selectHandler(payload.body);
+            break;
+        case PROTOCOL_CONTEXT.INIT:
+            await initHandler(payload.body);
+            break;
+        case PROTOCOL_CONTEXT.CONFIRM:
+            await confirmHandler(payload.body);
+            break;
+        case PROTOCOL_CONTEXT.STATUS:
+            await statusHandler(payload.body);
+            break;
+        case PROTOCOL_CONTEXT.TRACK:
+            await trackHandler(payload.body);
+            break;
+        case PROTOCOL_CONTEXT.UPDATE:
+            await updateHandler(payload.body);
+            break;
+        case PROTOCOL_CONTEXT.CANCEL:
+            await cancelHandler(payload.body);
+            break;
+        case PROTOCOL_CONTEXT.RATING:
+            await ratingHandler(payload.body);
+            break;
+        case PROTOCOL_CONTEXT.SUPPORT:
+            await supportHandler(payload.body);
             break;
         default:
             break;

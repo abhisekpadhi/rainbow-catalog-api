@@ -22,7 +22,7 @@ export const supportHandler = async (payload: any) => {
         message: result
     };
     LOG.info({msg: 'init handler response', body});
-    await bapCallback(PROTOCOL_CONTEXT.ON_INIT, body);
+    await bapCallback(PROTOCOL_CONTEXT.ON_SUPPORT, body);
 }
 
 const handleChatLink = async (request: any) => {
