@@ -20,8 +20,11 @@ export const CONSTANTS = Object.freeze({
         farmInventoryLedger: 'farmInventoryLedger',
         farmPrefs: 'farmPrefs',
         productCatalog: 'productCatalog',
+        ondcSubscriberInfo: 'ondcSubscriberInfo',
     },
     response: {
         ok: { message: 'ok' },
     },
+    ondcRequestRedisList: 'ondcRequestList',
+    ondcRequestRedisChannel: 'ondcRequestChannel'
 });

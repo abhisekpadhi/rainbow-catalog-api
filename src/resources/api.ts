@@ -1,6 +1,4 @@
 import express, {Request, Response} from 'express';
-import {ApiRoutes} from '../ApiRoutes';
-import {health} from '../workflows/health';
 import {Responder} from '../common/lib/responder';
 import {FarmerSchema, FarmPrefsSchema, FarmSchema, InventoryUpdateRequestSchema} from '../models/farmer-account';
 import {
@@ -68,8 +66,6 @@ const handleGetInventoryLedger = async  (req: Request, res: Response) => {
 const handleUpdateInventory = async  (req: Request, res: Response) => {
     await Responder.ofPost(req, res, InventoryUpdateRequestSchema, updateInventory)
 }
-
-
 
 // add routes here
 router.post('/login', loginHandler);
