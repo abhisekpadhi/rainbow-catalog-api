@@ -20,6 +20,7 @@ type ITaskPayload = {
     body: object;
 };
 
+// routes task to appropriate handlers
 const processTask = async (payload: ITaskPayload) => {
     LOG.info({msg: 'processTask', payload});
     switch (payload.path.slice(1)) {

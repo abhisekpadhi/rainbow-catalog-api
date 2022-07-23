@@ -16,4 +16,4 @@ export const ondcHandler = async (req: Request, res: Response) => {
 }
 
 router.use('*', ondcHandler);
-export const OndcResource = router;
+export const OndcRouter = router;

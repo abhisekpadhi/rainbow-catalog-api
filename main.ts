@@ -1,13 +1,13 @@
 import 'dotenv/config';
 import {app} from './app';
-import {RootResource} from './src/resources';
-import {OndcResource} from './src/ondc-proto/ondc-resources';
+import {RootRouter} from './src/resources';
+import {OndcRouter} from './src/ondc-proto/ondc-router';
 
 const port = process.env.PORT! as unknown as number;
 const host = process.env.HOST! as unknown as string;
 
-app.use('', RootResource);
-app.use('/api', OndcResource);
+app.use('', RootRouter);
+app.use('/api', OndcRouter);
 
 // start server
 app.listen(port, host, () => {
