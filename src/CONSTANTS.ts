@@ -21,6 +21,9 @@ export const CONSTANTS = Object.freeze({
         farmPrefs: 'farmPrefs',
         productCatalog: 'productCatalog',
         ondcSubscriberInfo: 'ondcSubscriberInfo',
+        order: 'order',
+        orderPayment: 'orderPayment',
+        farmerRating: 'farmerRating',
     },
     response: {
         ok: { message: 'ok' },

@@ -17,6 +17,17 @@ class FarmInventoryRepo {
     private readonly insertLedger = `insert into ${this.ledgerTable}`;
     private readonly delete = `delete from ${this.table}`;
 
+    // select
+    getByMultipleItemIds = async (itemIds: string[]) => {
+        return DB.all<FarmInventory>(
+            SqlString.format(
+                `select * from farmInventory where itemId in (??)`,
+                [itemIds]
+            ),
+            FarmInventory
+        );
+    }
+
     // search
     searchByItemName = async (itemName: string) => {
         return DB.all<FarmInventory>(
