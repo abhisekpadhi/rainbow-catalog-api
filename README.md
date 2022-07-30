@@ -6,10 +6,47 @@ API for smart cataloguing system for tech enablement of underserved farmers.
 - db: mysql
 
 ## db schema
+- order
+```shell
+orderId
+customerId
+ctxTxnId
+createdAt
+orderStatus
+refundTerms
+ff
+billing
+quote
+items
+```
+
+- orderPayment
+```shell
+orderId
+txnId
+type
+amountInPaise
+orderPaymentStatus
+createdAt
+```
+
+- farmerRating
+```shell
+customerId
+farmerId
+rating
+extraData
+createdAt
+```
+
 - farmer
 ```shell
 id
 farmerName
+providerId
+rating
+supportPhone
+supportEmail
 ```
 
 - farm
@@ -50,11 +87,13 @@ farmId
 productId
 priceInPaise
 qty
+itemId
 ```
 
 - farmInventoryLedger
 ```shell
 farmId
+itemId
 productId
 qty
 op

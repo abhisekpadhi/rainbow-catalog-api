@@ -2,6 +2,8 @@
 // handy functions to build ONDC response objects
 // ...
 
+import {randomUUID} from 'crypto';
+
 export const makeAck = (ack = true, contextError?: {code: string, path: string, message: string}) => {
     const res: Partial<{message: any, error: any}> = {
         "message": {
@@ -18,3 +20,9 @@ export const makeAck = (ack = true, contextError?: {code: string, path: string, 
     }
     return res;
 }
+
+export type IEntityType = 'provider' | 'loc' | 'fulfillment' | 'item' | 'payment' | 'billing';
+
+export const generateId = () => randomUUID();
+
+export const makeEntityId = (entity: IEntityType, id?: string) => `${entity}_${id === undefined ? generateId() : id}`;

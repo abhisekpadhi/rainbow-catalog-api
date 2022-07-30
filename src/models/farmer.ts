@@ -1,14 +1,18 @@
 import {z} from 'zod';
 import {BaseDTO} from './baseDTO';
+import {entityIdSchema, numberSchema, orderStatusSchema, refundSchema} from './common';
 
 export const BaseSchema = z.object({
-    id: z.number().default(0),
+    id: numberSchema,
 });
 
 export const FarmSchema = BaseSchema.extend({
-    farmerId: z.number().default(0),
+    farmerId: numberSchema,
     farmName: z.string().max(48).default(''),
-    farmLocation: z.string().max(64).default('')
+    farmLocation: z.string().max(64).default(''),
+    providerId: entityIdSchema,
+    supportPhone: z.string().max(10).default(''),
+    supportEmail: z.string().max(255).default(''),
 });
 
 export type IFarm = z.infer<typeof FarmSchema>;
@@ -22,6 +26,7 @@ export class Farm extends BaseDTO<IFarm> {
 export const FarmerSchema = BaseSchema.extend({
     phone: z.string().max(10).default(''),
     farmerName: z.string().max(48).default(''),
+    rating: z.number().max(5).default(0),
 });
 
 export type IFarmer = z.infer<typeof FarmerSchema>;
@@ -33,10 +38,11 @@ export class Farmer extends BaseDTO<IFarmer> {
 }
 
 export const FarmInventorySchema = BaseSchema.extend({
-    farmId: z.number().default(0),
-    priceInPaise: z.number().default(0),
+    farmId: numberSchema,
+    priceInPaise: numberSchema,
     productId: z.string().max(36).default(''),
-    qty: z.number().default(0),
+    qty: numberSchema,
+    itemId: entityIdSchema,
 });
 
 export type IFarmInventory = z.infer<typeof FarmInventorySchema>;
@@ -50,12 +56,13 @@ export class FarmInventory extends BaseDTO<IFarmInventory> {
 export const opSchema = z.enum(['add', 'remove']).default('add');
 
 export const FarmInventoryLedgerSchema = BaseSchema.extend({
-    farmId: z.number().default(0),
+    farmId: numberSchema,
     productId: z.string().default(''),
-    qty: z.number().default(0),
+    qty: numberSchema,
     op: opSchema,
-    opening: z.number().default(0),
-    createdAt: z.number().default(0),
+    opening: numberSchema,
+    createdAt: numberSchema,
+    itemId: entityIdSchema,
 });
 
 export type IFarmInventoryLedger = z.infer<typeof FarmInventoryLedgerSchema>;
@@ -67,7 +74,7 @@ export class FarmInventoryLedger extends BaseDTO<IFarmInventoryLedger> {
 }
 
 export const FarmPrefsSchema = BaseSchema.extend({
-    farmId: z.number().default(0),
+    farmId: numberSchema,
     prefKey: z.string().max(48).default(''),
     prefValue: z.string().max(256).default(''),
 });
@@ -110,3 +117,50 @@ export interface IInventoryResponse extends IProductCatalog {
 export const InventoryUpdateRequestSchema = FarmInventorySchema.extend({ op: opSchema });
 export type IInventoryUpdateRequest = z.infer<typeof InventoryUpdateRequestSchema>;
 
+export const FarmerRatingSchema = BaseSchema.extend({
+    customerId: entityIdSchema,
+    farmerId: entityIdSchema,
+    rating: numberSchema,
+    extraData: z.string().default(''),
+    createdAt: numberSchema,
+});
+
+export type IFarmerRating = z.infer<typeof FarmerRatingSchema>;
+
+export const OrderSchema = BaseSchema.extend({
+    orderId: entityIdSchema,
+    customerId: entityIdSchema,
+    ctxTxnId: entityIdSchema,
+    createdAt: numberSchema,
+    orderStatus: orderStatusSchema,
+    refundTerms: refundSchema,
+    ff: z.string().default(''),
+    billing: z.string().default(''),
+    quote: z.string().default(''),
+    items: z.string().default(''),
+});
+
+export type IOrder = z.infer<typeof OrderSchema>;
+
+export class Order extends BaseDTO<IOrder> {
+    constructor(payload: Partial<IOrder>) {
+        super(OrderSchema.parse(payload));
+    }
+}
+
+export const OrderPaymentSchema = BaseSchema.extend({
+    orderId: entityIdSchema,
+    txnId: entityIdSchema,
+    type: z.string().max(45).default(''),
+    amountInPaise: numberSchema,
+    orderPaymentStatus: z.string().max(45).default(''),
+    createdAt: numberSchema,
+});
+
+export type IOrderPayment = z.infer<typeof OrderPaymentSchema>;
+
+export class OrderPayment extends BaseDTO<IOrderPayment> {
+    constructor(payload: Partial<IOrderPayment>) {
+        super(OrderPaymentSchema.parse(payload));
+    }
+}

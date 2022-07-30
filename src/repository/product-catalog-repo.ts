@@ -1,5 +1,5 @@
 import {CONSTANTS} from '../CONSTANTS';
-import {Farm, IFarm, IProductCatalog, ProductCatalog} from '../models/farmer-account';
+import {Farm, IFarm, IProductCatalog, ProductCatalog} from '../models/farmer';
 import {DB} from '../common/lib/db';
 import SqlString from 'sqlstring';
 

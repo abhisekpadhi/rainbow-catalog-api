@@ -6,7 +6,7 @@ import {
     IProductCatalog,
     ProductCatalog,
     ProductCatalogSchema
-} from '../models/farmer-account';
+} from '../models/farmer';
 import FarmerRepo from '../repository/farmer-repo';
 import FarmRepo from '../repository/farm-repo';
 import FarmPrefsRepo from '../repository/farm-prefs-repo';
@@ -14,6 +14,7 @@ import {LOG} from '../common/lib/logger';
 import ProductCatalogRepo from '../repository/product-catalog-repo';
 import FarmInventoryRepo from '../repository/farm-inventory-repo';
 import {cache} from '../common/clients';
+import {makeEntityId} from '../ondc-proto/response-makers';
 
 export const login = async (payload: IFarmer) => {
     let farmer = await FarmerRepo.getByPhone(payload.phone)
@@ -145,8 +146,8 @@ export const getProduct = async (payload: { skuId: string }) => {
 }
 
 export const getFarmInventory = async (payload: {farmId: number}) => {
-    let res: IInventoryResponse[] = []
-    let inventory = await FarmInventoryRepo.getInventoryByFarm(payload.farmId)
+    const res: IInventoryResponse[] = []
+    const inventory = await FarmInventoryRepo.getInventoryByFarm(payload.farmId)
     if (inventory) {
         for (const sku of inventory) {
             if (sku && sku.data) {
@@ -181,8 +182,10 @@ export const updateInventory = async (payload: IInventoryUpdateRequest) => {
     }
     const opening = inventory?.data?.qty || 0
     const updateQty = payload.op === 'add' ? opening + payload.qty : opening - payload.qty;
+    const itemId = inventory?.data?.itemId || (payload.itemId.length === 0 ? makeEntityId('item') : payload.itemId)
     const inventoryUpdate: IFarmInventory = {
         ...inventory,
+        itemId,
         id: 0,
         farmId: payload.farmId,
         priceInPaise: payload.priceInPaise,
@@ -196,6 +199,7 @@ export const updateInventory = async (payload: IInventoryUpdateRequest) => {
         qty: payload.qty,
         op: payload.op,
         opening,
+        itemId,
         createdAt: Date.now()
     }
     await FarmInventoryRepo.updateFarmInventory(ledgerEntry, inventoryUpdate)

@@ -1,6 +1,6 @@
 import express, {Request, Response} from 'express';
 import {Responder} from '../common/lib/responder';
-import {FarmerSchema, FarmPrefsSchema, FarmSchema, InventoryUpdateRequestSchema} from '../models/farmer-account';
+import {FarmerSchema, FarmPrefsSchema, FarmSchema, InventoryUpdateRequestSchema} from '../models/farmer';
 import {
     createOrUpdateFarm, getFarmInventory,
     getFarmPrefs,

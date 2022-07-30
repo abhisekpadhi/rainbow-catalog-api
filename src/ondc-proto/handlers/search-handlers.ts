@@ -1,6 +1,14 @@
 import {bapCallback} from '../callback';
 import {PROTOCOL_CONTEXT} from '../models';
 import {LOG} from '../../common/lib/logger';
+import farmInventoryRepo from '../../repository/farm-inventory-repo';
+import farmRepo from '../../repository/farm-repo';
+import _ from 'lodash';
+import productCatalogRepo from '../../repository/product-catalog-repo';
+import {Farm} from '../../models/farmer';
+import {makeEntityId} from '../response-makers';
+
+const categoryId = 'Fruits and Vegetables';
 
 const getSearchType = (payload: any) => {
     if (payload?.message?.intent?.item?.descriptor?.name !== undefined) {
@@ -59,230 +67,316 @@ export const searchHandler = async (payload: any) => {
         'searchByCategoryId'
     ]);
 
-    let result = {}
+    const listOfItemsSet = new Set([
+        'searchByItemName',
+        'searchByPriceRange',
+        'searchByItemId'
+    ]);
 
-    if (!(new Set([...listOfCategorySet, ...listOfStoresSet]).has(searchType))) {
-        result = await searchForListOfItems(payload)
+    let result: object | null = {};
+
+    if (listOfItemsSet.has(searchType)) {
+        result = await searchForListOfItems(payload, searchType);
     }
 
     if (listOfStoresSet.has(searchType)) {
-        result = await searchForListOfStores(payload);
+        result = await searchForListOfStores(payload, searchType);
     }
-
     if (listOfCategorySet.has(searchType)) {
-        result = await searchForListOfCategory(payload);
+        result = await searchForListOfCategory(payload, searchType);
     }
-
+    if (result === null) {
+        result = {
+            "catalog": {
+                "bpp/descriptor": {
+                    "name": "dhoomnow.com",
+                    "short_desc": "",
+                    "long_desc": "",
+                    "symbol": "",
+                },
+                "bpp/providers": [],
+            }
+        }
+    }
     const body = {
         context: payload.context,
         message: result
     };
-
     LOG.info({msg: 'search handler response', body});
-
     await bapCallback(PROTOCOL_CONTEXT.ON_SEARCH, body);
 }
 
-const searchForListOfItems = async (request: any) => {
-    // todo: implement real-life searching logic
+// todo: hit cache first then db
+const _getFarmById = async (farmId: string) => {
+    return await farmRepo.getByFarmId(parseInt(farmId, 10))
+}
+
+// todo: hit cache first then db
+const _getProduct = async (productId: string) => {
+    return await productCatalogRepo.getByProductId(productId);
+}
+
+const _makeCatalogResponseFromFarmInventoryList = async (queryResult: any[]) => {
+    const queryResultByFarm = _.groupBy(queryResult, o => o.data!.farmId);
+    const providers: any[] = [];
+    for (const farmId of Object.keys(queryResultByFarm)) {
+        const farm = await _getFarmById(farmId);
+        const farmItems = queryResultByFarm[farmId];
+        const items = farmItems.map( async (inventoryItem) => {
+            const product = await _getProduct(inventoryItem.data!.productId);
+            return {
+                "id": inventoryItem.data!.itemId,
+                "descriptor": {
+                    "name": product!.data!.productName,
+                },
+                "location_id": `loc:${farmId}`,
+                "price": {
+                    "currency": "INR",
+                    "value": inventoryItem.data!.priceInPaise / 100,
+                },
+                "category_id": categoryId,
+                "fulfillment_id": 'fv_ff',
+                "@ondc/org/returnable": "false",
+                "@ondc/org/cancellable": "false",
+                "@ondc/org/time_to_ship": `${product?.data?.idealDelTat || ''}d`,
+                "@ondc/org/available_on_cod": "true",
+                "@ondc/org/contact_details_consumer_care": `${farm?.data?.supportPhone || ''} | ${farm?.data?.supportEmail || ''}`,
+                "@ondc/org/mandatory_reqs_veggies_fruits": {
+                    "net_quantity": product?.data?.packSize || '',
+                },
+                "tags": {
+                    "packSize": product?.data?.packSize || '',
+                    "productDescription": product?.data?.productDescription || '',
+                    "imageUrl": product?.data?.imageUrl || '',
+                    "grading": product?.data?.grading || '',
+                    "variant": product?.data?.variant || '',
+                    "perishability": product?.data?.perishability || '',
+                    "logisticsNeed": product?.data?.logisticsNeed || '',
+                    "coldChain": product?.data?.coldChain || '',
+                    "idealDeliveryTurnAroundTime": product?.data?.idealDelTat || ''
+                },
+                "matched": true,
+            }
+        });
+        const provider = {
+            "id": farm!.data!.providerId,
+            "descriptor": {
+                "name": farm!.data!.farmName
+            },
+            "locations": [
+                {
+                    "id": `loc:${farmId}`,
+                    "gps": farm!.data!.farmLocation, // string lat,lng
+                }
+            ],
+            "items": items
+        }
+        providers.push(provider);
+    }
     return {
         "catalog": {
             "bpp/descriptor": {
-                "name": "Shop EZ"
+                "name": "dhoomnow.com",
+                "short_desc": "",
+                "long_desc": "",
+                "symbol": "",
             },
-            "bpp/providers": [
-                {
-                    "id": "pooja_stores",
-                    "descriptor": {
-                        "name": "Pooja Stores"
-                    },
-                    "locations": [
-                        {
-                            "id": "pooja_stores_location",
-                            "gps": "12.9349377,77.6055586"
-                        }
-                    ],
-                    "items": [
-                        {
-                            "id": "item_1",
-                            "descriptor": {
-                                "name": "Brown Bread 400 gm"
-                            },
-                            "location_id": "pooja_stores_location",
-                            "price": {
-                                "currency": "INR",
-                                "value": "40"
-                            },
-                            "matched": true
-                        },
-                        {
-                            "id": "item_2",
-                            "descriptor": {
-                                "name": "Good Life Toned Milk 1L"
-                            },
-                            "location_id": "pooja_stores_location",
-                            "price": {
-                                "currency": "INR",
-                                "value": "60"
-                            },
-                            "matched": true
-                        }
-                    ],
-                    "exp": "2021-06-23T09:53:38.873Z"
-                },
-                {
-                    "id": "food_mall",
-                    "descriptor": {
-                        "name": "Food Mall"
-                    },
-                    "locations": [
-                        {
-                            "id": "food_mall_location",
-                            "gps": "12.9349377,77.6055586"
-                        }
-                    ],
-                    "items": [
-                        {
-                            "id": "bread_400g",
-                            "descriptor": {
-                                "name": "Brown Bread 400 gm"
-                            },
-                            "location_id": "food_mall_location",
-                            "price": {
-                                "currency": "INR",
-                                "value": "40"
-                            },
-                            "matched": true
-                        },
-                        {
-                            "id": "gl_milk",
-                            "descriptor": {
-                                "name": "Good Life Toned Milk 1L"
-                            },
-                            "location_id": "food_mall_location",
-                            "price": {
-                                "currency": "INR",
-                                "value": "60"
-                            },
-                            "matched": true
-                        }
-                    ],
-                    "exp": "2021-06-23T09:53:38.873Z"
-                }
-            ]
+            "bpp/providers": providers
         }
     };
+}
+
+const _searchByItemName = async (itemName: string) => {
+    const queryResult = await farmInventoryRepo.searchByItemName(itemName);
+    if (queryResult!== null) {
+        return _makeCatalogResponseFromFarmInventoryList(queryResult);
+    }
+    return null;
 };
 
-const searchForListOfStores = async (payload: any) => {
-    // todo: implement real-life searching logic
-    return {
-        "catalog": {
-            "bpp/descriptor": {
-                "name": "BPP"
+const _searchByPriceRange = async (startPriceInPaise: number, endPriceInPaise: number) => {
+    const queryResults = await farmInventoryRepo.searchByPriceRange(startPriceInPaise, endPriceInPaise);
+    if (queryResults !== null) {
+        return _makeCatalogResponseFromFarmInventoryList(queryResults);
+    }
+    return null;
+};
+const _searchByItemId = async (itemId: string) => {
+    const item = farmInventoryRepo.searchByItemId(itemId)
+    if(item !== null) {
+        return _makeCatalogResponseFromFarmInventoryList([item]);
+    }
+    return null;
+};
+
+const _makeCatalogResponseFromProviderList = (queryResults: Farm[] | null)=> {
+    if (queryResults === null) {
+        return null;
+    }
+    const providers = queryResults.map(provider => {
+        return {
+            "id": provider!.data!.providerId,
+            "descriptor": {
+                "name": provider.data!.farmName
             },
-            "bpp/providers": [
+            "locations": [
                 {
-                    "id": "pooja_stores",
-                    "descriptor": {
-                        "name": "Pooja Stores"
-                    },
-                    "locations": [
-                        {
-                            "id": "pooja_stores_location",
-                            "gps": "12.9349377,77.6055586"
-                        }
-                    ]
-                },
-                {
-                    "id": "good_stores",
-                    "descriptor": {
-                        "name": "Good Stores"
-                    },
-                    "locations": [
-                        {
-                            "id": "good_stores_location",
-                            "gps": "12.9349406,77.6208795"
-                        }
-                    ]
-                },
-                {
-                    "id": "food_mall",
-                    "descriptor": {
-                        "name": "Food Mall"
-                    },
-                    "locations": [
-                        {
-                            "id": "food_mall_location",
-                            "gps": "12.9349377,77.6055586"
-                        }
-                    ]
+                    "id": makeEntityId('loc', provider.data!.id.toString()),
+                    "gps": provider.data!.farmLocation,
                 }
             ]
         }
+    });
+    return {
+        "catalog": {
+            "bpp/descriptor": {
+                "name": "dhoomnow.com",
+                "short_desc": "",
+                "long_desc": "",
+                "symbol": "",
+            },
+            "bpp/providers": providers
+        }
+    };
+}
+
+const _searchByStoreName = async (storeName: string) => {
+    const queryResults = await farmRepo.searchByStoreName(storeName);
+    return _makeCatalogResponseFromProviderList(queryResults);
+}
+
+const _searchStoreByRating = async (rating: number) => {
+    const queryResults = await farmRepo.searchByRating(rating);
+    return _makeCatalogResponseFromProviderList(queryResults);
+}
+
+const _getAll =  async () => {
+    const queryResults = await farmRepo.getAll();
+    return _makeCatalogResponseFromProviderList(queryResults);
+}
+
+const _searchStoreByLocation = () => {
+    return _getAll();
+}
+
+const _searchByStoreId = async (storeId: string) => {
+    const queryResults = await farmRepo.getByProviderId(storeId);
+    return queryResults === null ? null : _makeCatalogResponseFromProviderList([queryResults]);
+}
+
+const _makeCatalogResponseForCategory = async (providers: Farm[]) => {
+    return providers.map(provider => {
+        return {
+            "id": provider!.data!.providerId,
+            "descriptor": {
+                "name": provider.data!.farmName
+            },
+            "categories": [
+                {
+                    "id": categoryId,
+                    "descriptor": {
+                        "name": categoryId
+                    }
+                }
+            ],
+            "matched": true
+        }
+    });
+}
+
+const _searchByCategoryId = async (id: string) => {
+    if (id === categoryId) {
+        const query = await farmRepo.getAll();
+        if (query !== null) {
+            return await _makeCatalogResponseForCategory(query);
+        }
+    }
+    return null
+}
+
+const _searchByCategoryName = async (name: string) => {
+    if (categoryId.toLowerCase().includes(name.toLowerCase())) {
+        const query = await farmRepo.getAll();
+        if (query !== null) {
+            return await _makeCatalogResponseForCategory(query);
+        }
+        return _getAll();
+    }
+    return null;
+}
+
+const searchForListOfItems = async (payload: any, type: string) => {
+    /**
+     *         'searchByItemName',
+     *         'searchByPriceRange',
+     *         'searchByItemId'
+     */
+    switch (type) {
+        case 'searchByItemName': {
+            const itemName = payload?.message?.intent?.item?.descriptor?.name || '';
+            return _searchByItemName(itemName);
+        }
+        case 'searchByPriceRange': {
+            const min = parseInt(payload?.message?.intent?.item?.price?.minimum_value || '0');
+            const max = parseInt(payload?.message?.intent?.item?.price?.maximum_value || '999999999');
+            return _searchByPriceRange(min, max);
+        }
+        case 'searchByItemId': {
+            const itemId = payload?.message?.intent?.item?.id || '';
+            return _searchByItemId(itemId);
+        }
+        default:
+            return null;
+    }
+};
+
+const searchForListOfStores = async (payload: any, type: string) => {
+    /**
+     * 'searchByStoreName',
+     *         'searchByPickupLocation',
+     *         'searchByDeliveryLocation',
+     *         'searchByFulfillmentMethod',
+     *         'searchByStoreId',
+     *         'searchByStoreRating',
+     */
+    switch (type) {
+        case 'searchByStoreName': {
+            const itemName = payload?.message?.intent?.provider?.descriptor?.name || '';
+            return _searchByStoreName(itemName);
+        }
+        case 'searchByPickupLocation':
+        case 'searchByDeliveryLocation':
+        case 'searchByFulfillmentMethod': {
+            return _searchStoreByLocation();
+        }
+        case 'searchByStoreId': {
+            const storeId = payload?.message?.intent?.provider?.id
+            return _searchByStoreId(storeId);
+        }
+        case 'searchByStoreRating': {
+            const rating = payload?.message?.intent?.provider?.rating
+            return _searchStoreByRating(rating);
+        }
+        default:
+            return null;
     }
 }
 
-const searchForListOfCategory = async (payload: any) => {
-    // todo: implement real-life searching logic
-    return {
-        "catalog": {
-            "bpp/descriptor": {
-                "name": "BPP"
-            },
-            "bpp/providers": [
-                {
-                    "id": "pooja_stores",
-                    "descriptor": {
-                        "name": "Pooja Stores"
-                    },
-                    "categories": [
-                        {
-                            "id": "pooja_bread",
-                            "descriptor": {
-                                "name": "Breads"
-                            }
-                        },
-                        {
-                            "id": "pooja_diary",
-                            "descriptor": {
-                                "name": "Dairy"
-                            }
-                        }
-                    ],
-                    "matched": true
-                },
-                {
-                    "id": "good_stores",
-                    "descriptor": {
-                        "name": "Good Stores"
-                    },
-                    "categories": [
-                        {
-                            "id": "bread_and_diary",
-                            "descriptor": {
-                                "name": "Bread and Dairy"
-                            }
-                        }
-                    ],
-                    "matched": true
-                },
-                {
-                    "id": "natures_basket",
-                    "descriptor": {
-                        "name": "Nature's basket"
-                    },
-                    "categories": [
-                        {
-                            "id": "natural_bread_and_diary",
-                            "descriptor": {
-                                "name": "Bread and Dairy"
-                            }
-                        }
-                    ],
-                    "matched": true
-                }
-            ]
+const searchForListOfCategory = async (payload: any, type: string) => {
+    /**
+     * 'searchByCategoryName',
+     *         'searchByCategoryId'
+     */
+    switch (type) {
+        case 'searchByCategoryName': {
+            const itemName = payload?.message?.intent?.category?.descriptor?.name || '';
+            return _searchByCategoryName(itemName);
         }
+        case 'searchByCategoryId': {
+            const storeId = payload?.message?.intent?.category?.id
+            return _searchByCategoryId(storeId);
+        }
+        default:
+            return null;
     }
 }
