@@ -5,6 +5,8 @@ import farmInventoryRepo from '../../repository/farm-inventory-repo';
 import _ from 'lodash';
 import orderRepo from '../../repository/order-repo';
 import {Order} from '../../models/farmer';
+import {makeEntityId} from '../response-makers';
+import dayjs from 'dayjs';
 
 const getSelectType = (payload: any) => {
     if (payload?.message?.order?.items !== undefined) {
@@ -122,9 +124,12 @@ const handleSelectItems = async (payload: any) => {
         ],
         "ttl": "P4D"
     }
-    // save updated cart in db
+    // save updated cart in db, order created first time here
     const updatedOrder = new Order({
         ...order!.data,
+        orderId: order !== null ? order.data!.orderId : makeEntityId('order'),
+        ctxTxnId,
+        createdAt: order !== null ? order.data!.createdAt : dayjs().valueOf(),
         items: JSON.stringify(items),
         quote: JSON.stringify(quote),
     });

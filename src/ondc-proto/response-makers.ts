@@ -21,7 +21,7 @@ export const makeAck = (ack = true, contextError?: {code: string, path: string, 
     return res;
 }
 
-export type IEntityType = 'provider' | 'loc' | 'fulfillment' | 'item' | 'payment' | 'billing';
+export type IEntityType = 'provider' | 'loc' | 'fulfillment' | 'item' | 'payment' | 'billing' | 'order';
 
 export const generateId = () => randomUUID();
 

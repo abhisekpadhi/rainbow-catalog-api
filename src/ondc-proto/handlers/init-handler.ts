@@ -1,7 +1,9 @@
 import {bapCallback} from '../callback';
 import {LOG} from '../../common/lib/logger';
 import {PROTOCOL_CONTEXT} from '../models';
-import _ from 'lodash';
+import orderRepo from '../../repository/order-repo';
+import {Order} from '../../models/farmer';
+import dayjs from 'dayjs';
 
 const getType = (payload: any) => {
     if (payload?.message?.order?.billing !== undefined) {
@@ -38,259 +40,123 @@ export const initHandler = async (payload: any) => {
     await bapCallback(PROTOCOL_CONTEXT.ON_INIT, body);
 }
 
-const handleShareBilling = async (request: any) => {
-    // todo: implement real-life logic
+const _makeEmptyResponse = () => {
     return {
         "order": {
-            "items": [
-                {
-                    "id": "./retail.kirana/ind.blr/pooja-stores.brown-bread-400gm@lrdn.bpp.shopez.com.item",
-                    "quantity": {
-                        "count": 1
-                    }
-                },
-                {
-                    "id": "./retail.kirana/ind.blr/pooja-stores.goodlife-milk-toned-1L@lrdn.bpp.shopez.com.item",
-                    "quantity": {
-                        "count": 2
-                    }
-                }
-            ],
-            "billing": {
-                "name": "John Doe",
-                "address": {
-                    "door": "21A",
-                    "name": "ABC Apartments",
-                    "locality": "HSR Layout",
-                    "city": "Bengaluru",
-                    "state": "Karnataka",
-                    "country": "India",
-                    "area_code": "560102"
-                },
-                "email": "user@example.com",
-                "phone": "+919876543210",
-                "created_at": "2021-06-15T07:08:36.211Z",
-                "updated_at": "2021-06-15T07:08:36.211Z"
-            },
-            "fulfillment": {
-                "type": "home-delivery",
-                "tracking": false,
-                "start": {
-                    "location": {
-                        "id": "./retail.kirana/ind.blr/pooja-stores.koramangala-4th-block@lrdn.bpp.shopez.com.provider_location",
-                        "descriptor": {
-                            "name": "Pooja Stores"
-                        },
-                        "gps": "12.9349377,77.6055586"
-                    },
-                    "time": {
-                        "range": {
-                            "start": "2021-06-15T07:09:30.000Z",
-                            "end": "2021-06-15T07:10:30.000Z"
-                        }
-                    },
-                    "instructions": {
-                        "name": "pick up instructions",
-                        "short_desc": "Provide the order id"
-                    },
-                    "contact": {
-                        "phone": "+919999999999",
-                        "email": "info@poojastores.com"
-                    }
-                },
-                "end": {
-                    "location": {
-                        "gps": "12.914028, 77.638698",
-                        "address": {
-                            "door": "21A",
-                            "name": "ABC Apartments",
-                            "locality": "HSR Layout",
-                            "city": "Bengaluru",
-                            "state": "Karnataka",
-                            "country": "India",
-                            "area_code": "560102"
-                        }
-                    },
-                    "time": {
-                        "range": {
-                            "start": "2021-06-15T07:11:36.212Z",
-                            "end": "2021-06-15T07:12:36.212Z"
-                        }
-                    },
-                    "instructions": {
-                        "name": "drop off instructions",
-                        "short_desc": "Leave at door step"
-                    },
-                    "contact": {
-                        "phone": "+919876543210",
-                        "email": "user@example.com"
-                    }
-                }
-            },
-            "quote": {
-                "price": {
-                    "currency": "INR",
-                    "value": "180"
-                },
-                "breakup": [
-                    {
-                        "title": "Brown Bread 400 gm",
-                        "price": {
-                            "currency": "INR",
-                            "value": "40"
-                        }
-                    },
-                    {
-                        "title": "Good Life Toned Milk 1L",
-                        "price": {
-                            "currency": "INR",
-                            "value": "120"
-                        }
-                    }
-                ],
-                "ttl": "P4D"
-            },
-            "payment": {
-                "uri": "https://api.bpp.com/pay?amt=$amount&txn_id=ksh87yriuro34iyr3p4&mode=upi&vpa=bpp@upi",
-                "tl_method": "http/get",
-                "params": {
-                    "transaction_id": "ksh87yriuro34iyr3p4",
-                    "amount": "180",
-                    "mode": "upi",
-                    "vpa": "bpp@upi"
-                },
-                "type": "ON-ORDER",
-                "status": "NOT-PAID"
-            }
+            "items": [],
+            "billing": {},
+            "fulfillment": {},
+            "quote": {},
+            "payment": {}
         }
     }
+}
+
+const _paymentResponse = {
+    "type": "ON-FULFILLMENT",
+    "status": "NOT-PAID"
+}
+
+// buyer shares billing, seller shares fulfillment policy & payment details
+const handleShareBilling = async (payload: any) => {
+    const ctxTxnId = payload?.context?.transaction_id || '';
+    if (ctxTxnId.length === 0) {
+        return _makeEmptyResponse();
+    }
+    // prepare updated billing
+    const billing = payload?.message?.order?.billing
+    const order = await orderRepo.getOrderByCtxTxnId(ctxTxnId);
+    let updated: {} = {...order};
+    if (billing !== undefined) {
+          updated = {...updated, billing: JSON.stringify(billing)};
+    }
+    //prepare fulfillment policy response
+    const ff = {
+        "type": "home-delivery",
+        "tracking": false,
+        "start": {
+            "location": {
+                "id": "provider_dhoomnow",
+                "descriptor": {
+                    "name": "DhoomNow"
+                },
+                "gps": "12.9349377,77.6055586"
+            },
+            "time": {
+                "range": {
+                    "start": `${dayjs().toDate()}`,
+                    "end": `${dayjs().add(2, 'days').toDate()}`,
+                }
+            },
+            "instructions": {
+                "name": "pick up instructions",
+                "short_desc": "Provide the order id"
+            },
+            "contact": {
+                "phone": "+919439831236",
+                "email": "care@dhoomnow.com"
+            }
+        },
+        "end": {
+            "location": {},
+            "time": {
+                "range": {
+                    "start": `${dayjs().toDate()}`,
+                    "end": `${dayjs().add(2, 'days').toDate()}`,
+                }
+            },
+            "instructions": {},
+            "contact": {}
+        }
+    }
+    // prepare payment details
+    const payment = _paymentResponse;
+    // db call to save billing, ff, payment
+    updated = {
+        ...updated,
+        ff: JSON.stringify(ff),
+    }
+    const updatedOrder = new Order(updated);
+    await orderRepo.updateOrder(updatedOrder.data!);
+    // respond
+    return  {
+        "order": {
+            "items": JSON.parse(order!.data!.items),
+            "billing": billing,
+            "fulfillment": ff,
+            "quote": JSON.parse(order!.data!.quote),
+            "payment": payment,
+        },
+    }
+
 };
 
-const handleShareFFShipping = async (request: any) => {
-    // todo: implement real-life logic
-    return {
-        "order": {
-            "items": [
-                {
-                    "id": "./retail.kirana/ind.blr/pooja-stores.brown-bread-400gm@lrdn.bpp.shopez.com.item",
-                    "quantity": {
-                        "count": 1
-                    }
-                },
-                {
-                    "id": "./retail.kirana/ind.blr/pooja-stores.goodlife-milk-toned-1L@lrdn.bpp.shopez.com.item",
-                    "quantity": {
-                        "count": 2
-                    }
-                }
-            ],
-            "billing": {
-                "name": "John Doe",
-                "address": {
-                    "door": "21A",
-                    "name": "ABC Apartments",
-                    "locality": "HSR Layout",
-                    "city": "Bengaluru",
-                    "state": "Karnataka",
-                    "country": "India",
-                    "area_code": "560102"
-                },
-                "email": "user@example.com",
-                "phone": "+919876543210",
-                "created_at": "2021-06-15T07:08:36.211Z",
-                "updated_at": "2021-06-15T07:08:36.211Z"
-            },
-            "fulfillment": {
-                "type": "home-delivery",
-                "tracking": false,
-                "start": {
-                    "location": {
-                        "id": "./retail.kirana/ind.blr/pooja-stores.koramangala-4th-block@lrdn.bpp.shopez.com.provider_location",
-                        "descriptor": {
-                            "name": "Pooja Stores"
-                        },
-                        "gps": "12.9349377,77.6055586"
-                    },
-                    "time": {
-                        "range": {
-                            "start": "2021-06-15T07:09:30.000Z",
-                            "end": "2021-06-15T07:10:30.000Z"
-                        }
-                    },
-                    "instructions": {
-                        "name": "pick up instructions",
-                        "short_desc": "Provide the order id"
-                    },
-                    "contact": {
-                        "phone": "+919999999999",
-                        "email": "info@poojastores.com"
-                    }
-                },
-                "end": {
-                    "location": {
-                        "gps": "12.914028, 77.638698",
-                        "address": {
-                            "door": "21A",
-                            "name": "ABC Apartments",
-                            "locality": "HSR Layout",
-                            "city": "Bengaluru",
-                            "state": "Karnataka",
-                            "country": "India",
-                            "area_code": "560102"
-                        }
-                    },
-                    "time": {
-                        "range": {
-                            "start": "2021-06-15T07:11:36.212Z",
-                            "end": "2021-06-15T07:12:36.212Z"
-                        }
-                    },
-                    "instructions": {
-                        "name": "drop off instructions",
-                        "short_desc": "Leave at door step"
-                    },
-                    "contact": {
-                        "phone": "+919876543210",
-                        "email": "user@example.com"
-                    }
-                }
-            },
-            "quote": {
-                "price": {
-                    "currency": "INR",
-                    "value": "180"
-                },
-                "breakup": [
-                    {
-                        "title": "Brown Bread 400 gm",
-                        "price": {
-                            "currency": "INR",
-                            "value": "40"
-                        }
-                    },
-                    {
-                        "title": "Good Life Toned Milk 1L",
-                        "price": {
-                            "currency": "INR",
-                            "value": "120"
-                        }
-                    }
-                ],
-                "ttl": "P4D"
-            },
-            "payment": {
-                "uri": "https://api.bpp.com/pay?amt=$amount&txn_id=ksh87yriuro34iyr3p4&mode=upi&vpa=bpp@upi",
-                "tl_method": "http/get",
-                "params": {
-                    "transaction_id": "ksh87yriuro34iyr3p4",
-                    "amount": "180",
-                    "mode": "upi",
-                    "vpa": "bpp@upi"
-                },
-                "type": "ON-ORDER",
-                "status": "NOT-PAID"
-            }
-        }
+// buyer shares fulfillment details, seller shares updated quote, with tracking policy
+const handleShareFFShipping = async (payload: any) => {
+    const ctxTxnId = payload?.context?.transaction_id || '';
+    if (ctxTxnId.length === 0) {
+        return _makeEmptyResponse();
     }
+    // save ff in db, buyer have sent end location
+    const ff = payload?.message?.order?.fulfillment;
+    if (ff === undefined) {
+        return _makeEmptyResponse()
+    }
+    const order = await orderRepo.getOrderByCtxTxnId(ctxTxnId);
+    if (order === null) {
+        return _makeEmptyResponse();
+    }
+    const updatedOrder = new Order({...order!.data, ff: JSON.stringify(ff)});
+    await orderRepo.updateOrder(updatedOrder.data!);
 
+    // respond with billing, ff, quote, pricing || quote & pricing does not change
+    return  {
+        "order": {
+            "items": JSON.parse(order!.data!.items),
+            "billing": JSON.parse(order!.data!.billing),
+            "fulfillment": ff,
+            "quote": JSON.parse(order!.data!.quote),
+            "payment": _paymentResponse,
+        },
+    }
 }
