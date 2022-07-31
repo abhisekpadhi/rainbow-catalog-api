@@ -1,6 +1,9 @@
 import {bapCallback} from '../callback';
 import {LOG} from '../../common/lib/logger';
 import {PROTOCOL_CONTEXT} from '../models';
+import util from 'util';
+import {CONSTANTS} from '../../CONSTANTS';
+import orderRepo from '../../repository/order-repo';
 
 const getType = (payload: any) => {
     if (payload?.message?.callback_url !== undefined) {
@@ -17,7 +20,7 @@ export const trackHandler = async (payload: any) => {
     if (type.length === 0) {
         return;
     }
-    LOG.info({msg: `confirmType: ${type}`});
+    LOG.info({msg: `trackType: ${type}`});
     const result = await handleTrack(payload);
     const body = {
         context: payload.context,
@@ -27,13 +30,13 @@ export const trackHandler = async (payload: any) => {
     await bapCallback(PROTOCOL_CONTEXT.ON_TRACK, body);
 }
 
-const handleTrack = async (request: any) => {
-    // todo: implement real-life logic
+const handleTrack = async (payload: any) => {
+    const orderId = payload?.message?.order_id;
+    const order = await orderRepo.getOrderById(orderId);
     return {
         "tracking": {
-            "url": "https://track.bpp.com?order_id=0f8c1e68-c041-427d-9ef4-d4d3e5b22ef9",
-            "status": "active"
+            "url": order !== null ? util.format(CONSTANTS.trackingUrl, orderId) : '',
+            "status": order?.data?.orderStatus || '',
         }
     }
-
-}
+};

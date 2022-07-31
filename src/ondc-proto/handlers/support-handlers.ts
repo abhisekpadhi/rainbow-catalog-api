@@ -1,6 +1,7 @@
 import {bapCallback} from '../callback';
 import {LOG} from '../../common/lib/logger';
 import {PROTOCOL_CONTEXT} from '../models';
+import {CONSTANTS} from '../../CONSTANTS';
 
 const getType = (payload: any) => {
     if (payload?.message?.ref_id !== undefined) {
@@ -16,7 +17,7 @@ export const supportHandler = async (payload: any) => {
     }
     LOG.info({msg: `confirmType: ${type}`});
     // todo: figure out what support handler to trigger b/w chat-link, phone, email
-    const result = await handleChatLink(payload);
+    const result = await handlePhoneNumber(payload);
     const body = {
         context: payload.context,
         message: result
@@ -25,25 +26,10 @@ export const supportHandler = async (payload: any) => {
     await bapCallback(PROTOCOL_CONTEXT.ON_SUPPORT, body);
 }
 
-const handleChatLink = async (request: any) => {
-    // todo: implement real-life logic
-    return {
-        "uri": "http://support.bpp.com?order_id=0f8c1e68-c041-427d-9ef4-d4d3e5b22ef9"
-    }
-}
-
 const handlePhoneNumber = async (request: any) => {
-    // todo: implement real-life logic
     return {
-        "phone": "+919898989898"
+        "uri": "", // support chat link
+        "phone": CONSTANTS.contact,
+        "email": CONSTANTS.email
     }
-
-}
-
-const handleEmail = async (request: any) => {
-    // todo: implement real-life logic
-    return {
-        "email": "support@example.com"
-    }
-
 }

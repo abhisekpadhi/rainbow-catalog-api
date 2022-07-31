@@ -16,5 +16,10 @@ export const bapCallback = async (action: PROTOCOL_CONTEXT, body: { context: IOn
     const header = {[HEADERS.AUTH_TOKEN]: await createAuthorizationHeader(body.message)};
     LOG.info({msg: 'bapCallback', header});
     const request = new HttpRequest(makeBaseUri(body.context.bap_uri), action, 'POST', body, header);
-    await request.send(); // fire n forget
+    // fire n forget
+    try {
+        await request.send();
+    } catch (e) {
+        LOG.info({msg: 'exception in bapCallback', error: e});
+    }
 };

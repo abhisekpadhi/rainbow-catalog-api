@@ -4,6 +4,7 @@ import {PROTOCOL_CONTEXT} from '../models';
 import orderRepo from '../../repository/order-repo';
 import {Order} from '../../models/farmer';
 import dayjs from 'dayjs';
+import {CONSTANTS} from '../../CONSTANTS';
 
 const getType = (payload: any) => {
     if (payload?.message?.order?.billing !== undefined) {
@@ -76,16 +77,16 @@ const handleShareBilling = async (payload: any) => {
         "tracking": false,
         "start": {
             "location": {
-                "id": "provider_dhoomnow",
+                "id": CONSTANTS.name,
                 "descriptor": {
-                    "name": "DhoomNow"
+                    "name": CONSTANTS.name
                 },
-                "gps": "12.9349377,77.6055586"
+                "gps": CONSTANTS.gps
             },
             "time": {
                 "range": {
                     "start": `${dayjs().toDate()}`,
-                    "end": `${dayjs().add(2, 'days').toDate()}`,
+                    "end": `${dayjs().add(CONSTANTS.deliveryPromiseInDays, 'days').toDate()}`,
                 }
             },
             "instructions": {
@@ -93,8 +94,8 @@ const handleShareBilling = async (payload: any) => {
                 "short_desc": "Provide the order id"
             },
             "contact": {
-                "phone": "+919439831236",
-                "email": "care@dhoomnow.com"
+                "phone": CONSTANTS.contact,
+                "email": CONSTANTS.email,
             }
         },
         "end": {
@@ -102,7 +103,7 @@ const handleShareBilling = async (payload: any) => {
             "time": {
                 "range": {
                     "start": `${dayjs().toDate()}`,
-                    "end": `${dayjs().add(2, 'days').toDate()}`,
+                    "end": `${dayjs().add(CONSTANTS.deliveryPromiseInDays, 'days').toDate()}`,
                 }
             },
             "instructions": {},

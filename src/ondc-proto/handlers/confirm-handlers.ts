@@ -1,6 +1,9 @@
 import {bapCallback} from '../callback';
 import {LOG} from '../../common/lib/logger';
 import {PROTOCOL_CONTEXT} from '../models';
+import orderRepo from '../../repository/order-repo';
+import {Order, OrderStatus} from '../../models/farmer';
+import dayjs from 'dayjs';
 
 const getType = (payload: any) => {
     if (payload?.message?.order?.payment?.type !== undefined) {
@@ -31,135 +34,47 @@ export const confirmHandler = async (payload: any) => {
     await bapCallback(PROTOCOL_CONTEXT.ON_CONFIRM, body);
 }
 
-const handleConfirm = async (request: any) => {
-    // todo: implement real-life logic
+const _makeEmptyResponse = () => {
     return {
         "order": {
-            "id": "order_2",
-            "state": "Active",
-            "items": [
-                {
-                    "id": "item_1",
-                    "quantity": {
-                        "count": 1
-                    }
-                },
-                {
-                    "id": "item_2",
-                    "quantity": {
-                        "count": 2
-                    }
-                }
-            ],
-            "billing": {
-                "name": "John Doe",
-                "address": {
-                    "door": "21A",
-                    "name": "ABC Apartments",
-                    "locality": "HSR Layout",
-                    "city": "Bengaluru",
-                    "state": "Karnataka",
-                    "country": "India",
-                    "area_code": "560102"
-                },
-                "email": "user@example.com",
-                "phone": "+919876543210",
-                "created_at": "2021-06-15T07:08:36.211Z",
-                "updated_at": "2021-06-15T07:08:36.211Z"
-            },
-            "fulfillment": {
-                "type": "home-delivery",
-                "tracking": false,
-                "start": {
-                    "location": {
-                        "id": "pooja_stores_location",
-                        "descriptor": {
-                            "name": "Pooja Stores"
-                        },
-                        "gps": "12.9349377,77.6055586"
-                    },
-                    "time": {
-                        "range": {
-                            "start": "2021-06-15T07:09:30.000Z",
-                            "end": "2021-06-15T07:10:30.000Z"
-                        }
-                    },
-                    "instructions": {
-                        "name": "pick up instructions",
-                        "short_desc": "Provide the order id"
-                    },
-                    "contact": {
-                        "phone": "+919999999999",
-                        "email": "info@poojastores.com"
-                    }
-                },
-                "end": {
-                    "location": {
-                        "gps": "12.914028, 77.638698",
-                        "address": {
-                            "door": "21A",
-                            "name": "ABC Apartments",
-                            "locality": "HSR Layout",
-                            "city": "Bengaluru",
-                            "state": "Karnataka",
-                            "country": "India",
-                            "area_code": "560102"
-                        }
-                    },
-                    "time": {
-                        "range": {
-                            "start": "2021-06-15T07:11:36.212Z",
-                            "end": "2021-06-15T07:12:36.212Z"
-                        }
-                    },
-                    "instructions": {
-                        "name": "drop off instructions",
-                        "short_desc": "Leave at door step"
-                    },
-                    "contact": {
-                        "phone": "+919876543210",
-                        "email": "user@example.com"
-                    }
-                }
-            },
-            "quote": {
-                "price": {
-                    "currency": "INR",
-                    "value": "180"
-                },
-                "breakup": [
-                    {
-                        "title": "Brown Bread 400 gm",
-                        "price": {
-                            "currency": "INR",
-                            "value": "40"
-                        }
-                    },
-                    {
-                        "title": "Good Life Toned Milk 1L",
-                        "price": {
-                            "currency": "INR",
-                            "value": "120"
-                        }
-                    }
-                ],
-                "ttl": "P4D"
-            },
-            "payment": {
-                "uri": "https://api.bpp.com/pay?amt=$amount&txn_id=ksh87yriuro34iyr3p4&mode=upi&vpa=bpp@upi",
-                "tl_method": "http/get",
-                "params": {
-                    "transaction_id": "ksh87yriuro34iyr3p4",
-                    "amount": "180",
-                    "mode": "upi",
-                    "vpa": "bpp@upi"
-                },
-                "type": "ON-ORDER",
-                "status": "PAID"
-            },
-            "created_at": "2021-06-23T07:41:43.408Z",
-            "updated_at": "2021-06-23T07:41:43.408Z"
+            "id": "",
+            "state": "",
+            "items": [],
+            "billing": {},
+            "fulfillment": {},
+            "quote": {},
+            "payment": {}
         }
     }
+}
 
+const _paymentResponse = {
+    "type": "ON-FULFILLMENT",
+    "status": "NOT-PAID"
+}
+
+const handleConfirm = async (payload: any) => {
+    const ctxTxnId = payload?.context?.transaction_id || '';
+    if (ctxTxnId.length === 0) {
+        return _makeEmptyResponse();
+    }
+    const order = await orderRepo.getOrderByCtxTxnId(ctxTxnId);
+    if (order === null) {
+        return _makeEmptyResponse();
+    }
+    // update order status in db
+    await orderRepo.updateOrder(new Order({...order!.data!, orderStatus: OrderStatus.active}).data!);
+    return {
+        "order": {
+            "id": order!.data!.orderId,
+            "state": OrderStatus.active,
+            "items": JSON.parse(order!.data!.items),
+            "billing": JSON.parse(order!.data!.billing),
+            "fulfillment": JSON.parse(order!.data!.ff),
+            "quote": JSON.parse(order!.data!.quote),
+            "payment": _paymentResponse,
+            "created_at": dayjs(order!.data!.createdAt).toDate().toISOString(),
+            "updated_at": dayjs().toDate().toISOString(),
+        }
+    }
 }

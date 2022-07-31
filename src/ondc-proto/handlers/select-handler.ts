@@ -90,7 +90,7 @@ const handleSelectItems = async (payload: any) => {
         const requested = requestedItems.find(o => o.id === item.data!.itemId);
         let count = requested!.quantity.count;
         if (requested!.quantity.count > item.data!.qty) {
-            count = 0
+            count = item.data!.qty;
         }
         return {
             "id": item.data!.itemId,

@@ -138,6 +138,7 @@ export const OrderSchema = BaseSchema.extend({
     billing: z.string().default(''),
     quote: z.string().default(''),
     items: z.string().default(''),
+    extraData: z.string().default(''),
 });
 
 export type IOrder = z.infer<typeof OrderSchema>;
@@ -146,6 +147,10 @@ export class Order extends BaseDTO<IOrder> {
     constructor(payload: Partial<IOrder>) {
         super(OrderSchema.parse(payload));
     }
+}
+
+export interface OrderExtraData {
+    cancelReason?: string;
 }
 
 export const OrderPaymentSchema = BaseSchema.extend({
@@ -163,4 +168,11 @@ export class OrderPayment extends BaseDTO<IOrderPayment> {
     constructor(payload: Partial<IOrderPayment>) {
         super(OrderPaymentSchema.parse(payload));
     }
+}
+
+export enum OrderStatus {
+    active = 'active',
+    cancelled = 'cancelled',
+    delivered = 'delivered',
+    rto = 'rto'
 }

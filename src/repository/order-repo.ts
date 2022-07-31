@@ -7,7 +7,7 @@ import SqlString from 'sqlstring';
 
 class OrderRepo {
     private readonly table = CONSTANTS.tables.order;
-    private readonly columns = "orderId, customerId, ctxTxnId, createdAt, orderStatus, refundTerms, ff, billing, quote, items";
+    private readonly columns = "orderId, customerId, ctxTxnId, createdAt, orderStatus, refundTerms, ff, billing, quote, items, extraData";
     private readonly insert = `insert into ${this.table}`;
     private readonly update = `update ${this.table}`;
 
@@ -32,21 +32,21 @@ class OrderRepo {
     }
 
     insertOrder = async (data: IOrder) => {
-        const {orderId, customerId, ctxTxnId, createdAt, orderStatus, refundTerms, ff, billing, quote, items} = data
+        const {orderId, customerId, ctxTxnId, createdAt, orderStatus, refundTerms, ff, billing, quote, items, extraData} = data
         await DB.updateTxn([
             SqlString.format(
-                this.insert + ` (??) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [orderId, customerId, ctxTxnId, createdAt, orderStatus, refundTerms, ff, billing, quote, items]
+                this.insert + ` (??) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [orderId, customerId, ctxTxnId, createdAt, orderStatus, refundTerms, ff, billing, quote, items, extraData]
             ),
         ]);
     }
 
     updateOrder = async (data: IOrder) => {
-        const {orderId, customerId, ctxTxnId, createdAt, orderStatus, refundTerms, ff, billing, quote, items} = data
+        const {orderId, customerId, ctxTxnId, createdAt, orderStatus, refundTerms, ff, billing, quote, items, extraData} = data
         await DB.updateTxn([
             SqlString.format(
-                this.update + ` set orderId = ?, customerId = ?, ctxTxnId = ?, createdAt = ?, orderStatus = ?, refundTerms = ?, ff = ?, billing = ?, quote = ?, items = ?`,
-                [orderId, customerId, ctxTxnId, createdAt, orderStatus, refundTerms, ff, billing, quote, items]
+                this.update + ` set orderId = ?, customerId = ?, ctxTxnId = ?, createdAt = ?, orderStatus = ?, refundTerms = ?, ff = ?, billing = ?, quote = ?, items = ?, extraData = ?`,
+                [orderId, customerId, ctxTxnId, createdAt, orderStatus, refundTerms, ff, billing, quote, items, extraData]
             ),
         ]);
     }

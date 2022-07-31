@@ -23,6 +23,6 @@ export const makeAck = (ack = true, contextError?: {code: string, path: string, 
 
 export type IEntityType = 'provider' | 'loc' | 'fulfillment' | 'item' | 'payment' | 'billing' | 'order';
 
-export const generateId = () => randomUUID();
+export const generateId = () => randomUUID().replaceAll('-', '');
 
 export const makeEntityId = (entity: IEntityType, id?: string) => `${entity}_${id === undefined ? generateId() : id}`;

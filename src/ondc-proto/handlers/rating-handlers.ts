@@ -25,62 +25,11 @@ export const ratingHandler = async (payload: any) => {
     await bapCallback(PROTOCOL_CONTEXT.ON_RATING, body);
 }
 
+// for hackathon we are ignoring all ratings
 const handleAckRating = async (request: any) => {
     // todo: implement real-life logic
     return {
         "feedback_ack": true,
         "rating_ack": true
-    }
-}
-
-const handleSendFeedbackForm = async (request: any) => {
-    // todo: implement real-life logic
-    return {
-        "feedback_form" : [
-            {
-                "id": "1",
-                "parent_id": null,
-                "answer": null,
-                "answer_type": null,
-                "question": "Did you like the service?"
-            },
-            {
-                "id": "2",
-                "parent_id": "1",
-                "answer_type": "radio-button",
-                "answer": "Yes"
-            },
-            {
-                "id": "3",
-                "parent_id": "1",
-                "answer_type": "radio-button",
-                "answer": "No"
-            },
-            {
-                "id": "4",
-                "parent_id": null,
-                "answer_type": null,
-                "answer": null,
-                "question": "What did you like?"
-            },
-            {
-                "id": "5",
-                "parent_id": "4",
-                "answer_type": "check-box",
-                "answer": "Packaging"
-            },
-            {
-                "id": "6",
-                "parent_id": "4",
-                "answer_type": "check-box",
-                "answer": "Food"
-            },
-            {
-                "id": "7",
-                "parent_id": null,
-                "answer_type": "free-text",
-                "question": "What can we improve on?"
-            }
-        ]
     }
 }

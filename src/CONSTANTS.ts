@@ -29,5 +29,11 @@ export const CONSTANTS = Object.freeze({
         ok: { message: 'ok' },
     },
     ondcRequestRedisList: 'ondcRequestList',
-    ondcRequestRedisChannel: 'ondcRequestChannel'
+    ondcRequestRedisChannel: 'ondcRequestChannel',
+    deliveryPromiseInDays: 7,
+    name: "DhoomNow",
+    gps: "12.9349377,77.6055586",
+    contact: '+917978608446',
+    email: 'support@subnub.com',
+    trackingUrl: 'https://ondc.dhoomnow.com/tracking?orderId=%s',
 });

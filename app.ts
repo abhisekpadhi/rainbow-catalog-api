@@ -26,4 +26,7 @@ app.use(helmet());
 // error handling
 app.use(handleError)
 
+// ejs template
+app.set('view engine', 'ejs');
+
 export {app};
