@@ -23,7 +23,7 @@ export const CONSTANTS = Object.freeze({
         ondcSubscriberInfo: 'ondcSubscriberInfo',
         order: 'order',
         orderPayment: 'orderPayment',
-        farmerRating: 'farmerRating',
+        rating: 'rating',
     },
     response: {
         ok: { message: 'ok' },

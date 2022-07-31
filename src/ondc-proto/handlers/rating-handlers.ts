@@ -1,6 +1,9 @@
 import {bapCallback} from '../callback';
 import {LOG} from '../../common/lib/logger';
 import {PROTOCOL_CONTEXT} from '../models';
+import ratingRepo from '../../repository/rating-repo';
+import {Farm, Rating} from '../../models/farmer';
+import farmRepo from '../../repository/farm-repo';
 
 const getType = (payload: any) => {
     if (payload?.message?.rating_category !== undefined) {
@@ -15,7 +18,6 @@ export const ratingHandler = async (payload: any) => {
         return;
     }
     LOG.info({msg: `confirmType: ${type}`});
-    // todo: figure out when handleSendFeedbackForm is required
     const result = await handleAckRating(payload);
     const body = {
         context: payload.context,
@@ -25,9 +27,39 @@ export const ratingHandler = async (payload: any) => {
     await bapCallback(PROTOCOL_CONTEXT.ON_RATING, body);
 }
 
+const _makeEmptyResponse = () => {
+    return {
+        "feedback_ack": false,
+        "rating_ack": false
+    }
+}
+
 // for hackathon we are ignoring all ratings
-const handleAckRating = async (request: any) => {
-    // todo: implement real-life logic
+const handleAckRating = async (payload: any) => {
+    const ctxTxnId = payload?.context?.transaction_id || '';
+    if (ctxTxnId.length === 0) {
+        return _makeEmptyResponse();
+    }
+    // save rating in db for only provider
+    await ratingRepo.updateFarmPrefs(new Rating({ctxTxnId, payload: payload?.message}).data!);
+    const ratingCategory = payload?.message?.rating_category || '';
+    const ratingValue = payload?.message?.value || 1;
+    if (ratingCategory === 'provider') {
+        const providerId = payload?.message?.id || '';
+        if (providerId.length > 0) {
+            const farm = await farmRepo.getByProviderId(providerId);
+            if (farm !== null) {
+                const extraData = {
+                    rating: {
+                        total: (farm.data?.extraData || '').length > 0 ? (JSON.parse(farm.data!.extraData)?.rating?.total || 0) + ratingValue : ratingValue,
+                        count: (farm.data?.extraData || '').length > 0 ? (JSON.parse(farm.data!.extraData)?.rating?.count || 0) + 1 : 1,
+                    }
+                }
+                const rating = extraData.rating.total/extraData.rating.count;
+                await farmRepo.updateFarm(new Farm({...farm.data!, rating, extraData: JSON.stringify(extraData)}).data!);
+            }
+        }
+    }
     return {
         "feedback_ack": true,
         "rating_ack": true

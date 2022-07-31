@@ -13,7 +13,17 @@ export const FarmSchema = BaseSchema.extend({
     providerId: entityIdSchema,
     supportPhone: z.string().max(10).default(''),
     supportEmail: z.string().max(255).default(''),
+    rating: z.number().max(5).default(0),
+    extraData: z.string().default(''),
 });
+
+export interface IFarmExtraData {
+    rating: {
+        total: number;
+        count: number;
+    }
+}
+
 
 export type IFarm = z.infer<typeof FarmSchema>;
 
@@ -26,7 +36,6 @@ export class Farm extends BaseDTO<IFarm> {
 export const FarmerSchema = BaseSchema.extend({
     phone: z.string().max(10).default(''),
     farmerName: z.string().max(48).default(''),
-    rating: z.number().max(5).default(0),
 });
 
 export type IFarmer = z.infer<typeof FarmerSchema>;
@@ -36,6 +45,7 @@ export class Farmer extends BaseDTO<IFarmer> {
         super(FarmerSchema.parse(init));
     }
 }
+
 
 export const FarmInventorySchema = BaseSchema.extend({
     farmId: numberSchema,
@@ -117,20 +127,23 @@ export interface IInventoryResponse extends IProductCatalog {
 export const InventoryUpdateRequestSchema = FarmInventorySchema.extend({ op: opSchema });
 export type IInventoryUpdateRequest = z.infer<typeof InventoryUpdateRequestSchema>;
 
-export const FarmerRatingSchema = BaseSchema.extend({
-    customerId: entityIdSchema,
-    farmerId: entityIdSchema,
-    rating: numberSchema,
-    extraData: z.string().default(''),
-    createdAt: numberSchema,
+export const RatingSchema = BaseSchema.extend({
+    ctxTxnId: z.string().default(''),
+    payload: z.string().default(''),
 });
 
-export type IFarmerRating = z.infer<typeof FarmerRatingSchema>;
+export type IRating = z.infer<typeof RatingSchema>;
+
+export class Rating extends BaseDTO<IRating> {
+    constructor(payload: Partial<IRating>) {
+        super(RatingSchema.parse(payload));
+    }
+}
 
 export const OrderSchema = BaseSchema.extend({
     orderId: entityIdSchema,
     customerId: entityIdSchema,
-    ctxTxnId: entityIdSchema,
+    ctxTxnId: z.string().default(''),
     createdAt: numberSchema,
     orderStatus: orderStatusSchema,
     refundTerms: refundSchema,
