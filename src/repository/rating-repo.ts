@@ -9,7 +9,7 @@ class RatingRepo {
     private readonly update = `update ${this.table}`;
     private readonly delete = `delete from ${this.table}`;
     private readonly insert = `insert into ${this.table}`;
-    updateFarmPrefs = async (data: IRating) => {
+    addRating = async (data: IRating) => {
         const {ctxTxnId, payload} = data;
         await DB.updateTxn([
             SqlString.format(

@@ -40,10 +40,12 @@ const handleAckRating = async (payload: any) => {
     if (ctxTxnId.length === 0) {
         return _makeEmptyResponse();
     }
-    // save rating in db for only provider
-    await ratingRepo.updateFarmPrefs(new Rating({ctxTxnId, payload: payload?.message}).data!);
+    // save rating in db
+    await ratingRepo.addRating(new Rating({ctxTxnId, payload: payload?.message}).data!);
     const ratingCategory = payload?.message?.rating_category || '';
     const ratingValue = payload?.message?.value || 1;
+
+    // update provider rating in db
     if (ratingCategory === 'provider') {
         const providerId = payload?.message?.id || '';
         if (providerId.length > 0) {
