@@ -5,17 +5,35 @@ import farmInventoryRepo from '../../repository/farm-inventory-repo';
 import farmRepo from '../../repository/farm-repo';
 import _ from 'lodash';
 import productCatalogRepo from '../../repository/product-catalog-repo';
-import {Farm} from '../../models/farmer';
+import {Farm, FarmInventory} from '../../models/farmer';
 import {makeEntityId} from '../response-makers';
 
 const categoryId = 'Fruits and Vegetables';
 
 const getSearchType = (payload: any) => {
+    if (payload?.message?.intent?.item?.price !== undefined) {
+        return 'searchByPriceRange';
+    }
+    if (payload?.message?.intent?.item?.id !== undefined) {
+        return 'searchByItemId';
+    }
+    if (payload?.message?.intent?.provider?.id !== undefined) {
+        return 'searchByStoreId';
+    }
     if (payload?.message?.intent?.item?.descriptor?.name !== undefined) {
         return 'searchByItemName';
     }
-    if (payload?.message?.intent?.provider !== undefined) {
+    if (payload?.message?.intent?.provider?.descriptor?.name !== undefined) {
         return 'searchByStoreName';
+    }
+    if (payload?.message?.intent?.provider?.rating !== undefined) {
+        return 'searchByStoreRating';
+    }
+    if (payload?.message?.intent?.category?.descriptor?.name !== undefined) {
+        return 'searchByCategoryName';
+    }
+    if (payload?.message?.intent?.category?.id !== undefined) {
+        return 'searchByCategoryId';
     }
     if (payload?.message?.intent?.fulfillment?.start !== undefined) {
         return 'searchByPickupLocation';
@@ -25,24 +43,6 @@ const getSearchType = (payload: any) => {
     }
     if (payload?.message?.intent?.fulfillment?.type !== undefined) {
         return 'searchByFulfillmentMethod';
-    }
-    if (payload?.message?.intent?.item?.id !== undefined) {
-        return 'searchByItemId';
-    }
-    if (payload?.message?.intent?.provider?.id !== undefined) {
-        return 'searchByStoreId';
-    }
-    if (payload?.message?.intent?.item?.price !== undefined) {
-        return 'searchByPriceRange';
-    }
-    if (payload?.message?.intent?.provider?.rating !== undefined) {
-        return 'searchByStoreRating';
-    }
-    if (payload?.message?.intent?.category?.descriptor !== undefined) {
-        return 'searchByCategoryName';
-    }
-    if (payload?.message?.intent?.category?.id !== undefined) {
-        return 'searchByCategoryId';
     }
     return '';
 }
@@ -113,17 +113,21 @@ const _getFarmById = async (farmId: string) => {
 
 // todo: hit cache first then db
 const _getProduct = async (productId: string) => {
+    LOG.info({msg: '_getProductId', productId});
     return await productCatalogRepo.getByProductId(productId);
 }
 
-const _makeCatalogResponseFromFarmInventoryList = async (queryResult: any[]) => {
+const _makeCatalogResponseFromFarmInventoryList = async (queryResult: FarmInventory[]) => {
     const queryResultByFarm = _.groupBy(queryResult, o => o.data!.farmId);
-    const providers: any[] = [];
+    LOG.info({msg: 'queryResultByFarm', queryResultByFarm});
+    const providers = [];
     for (const farmId of Object.keys(queryResultByFarm)) {
         const farm = await _getFarmById(farmId);
         const farmItems = queryResultByFarm[farmId];
-        const items = farmItems.map( async (inventoryItem) => {
+        LOG.info({farmItems});
+        const itemsAsync = farmItems.map( async (inventoryItem) => {
             const product = await _getProduct(inventoryItem.data!.productId);
+            LOG.info({product});
             return {
                 "id": inventoryItem.data!.itemId,
                 "descriptor": {
@@ -153,11 +157,13 @@ const _makeCatalogResponseFromFarmInventoryList = async (queryResult: any[]) => 
                     "perishability": product?.data?.perishability || '',
                     "logisticsNeed": product?.data?.logisticsNeed || '',
                     "coldChain": product?.data?.coldChain || '',
-                    "idealDeliveryTurnAroundTime": product?.data?.idealDelTat || ''
+                    "idealDeliveryTurnAroundTime": `${product?.data?.idealDelTat}d` || '1d'
                 },
                 "matched": true,
             }
         });
+        const items = await Promise.all(itemsAsync);
+        LOG.info({items});
         const provider = {
             "id": farm!.data!.providerId,
             "descriptor": {
@@ -187,22 +193,24 @@ const _makeCatalogResponseFromFarmInventoryList = async (queryResult: any[]) => 
 }
 
 const _searchByItemName = async (itemName: string) => {
+    LOG.info({msg: '_searchByItemName', itemName});
     const queryResult = await farmInventoryRepo.searchByItemName(itemName);
-    if (queryResult!== null) {
+    LOG.info({msg: '_searchByItemName queryResult', queryResult});
+    if (queryResult !== null) {
         return _makeCatalogResponseFromFarmInventoryList(queryResult);
     }
     return null;
 };
 
-const _searchByPriceRange = async (startPriceInPaise: number, endPriceInPaise: number) => {
-    const queryResults = await farmInventoryRepo.searchByPriceRange(startPriceInPaise, endPriceInPaise);
+const _searchByPriceRange = async (itemName: string, startPriceInPaise: number, endPriceInPaise: number) => {
+    const queryResults = await farmInventoryRepo.searchByPriceRange(itemName, startPriceInPaise, endPriceInPaise);
     if (queryResults !== null) {
         return _makeCatalogResponseFromFarmInventoryList(queryResults);
     }
     return null;
 };
 const _searchByItemId = async (itemId: string) => {
-    const item = farmInventoryRepo.searchByItemId(itemId)
+    const item = await farmInventoryRepo.searchByItemId(itemId)
     if(item !== null) {
         return _makeCatalogResponseFromFarmInventoryList([item]);
     }
@@ -260,6 +268,7 @@ const _searchStoreByLocation = () => {
 }
 
 const _searchByStoreId = async (storeId: string) => {
+    LOG.info({msg: '_searchByStoreId', storeId});
     const queryResults = await farmRepo.getByProviderId(storeId);
     return queryResults === null ? null : _makeCatalogResponseFromProviderList([queryResults]);
 }
@@ -317,9 +326,10 @@ const searchForListOfItems = async (payload: any, type: string) => {
             return _searchByItemName(itemName);
         }
         case 'searchByPriceRange': {
-            const min = parseInt(payload?.message?.intent?.item?.price?.minimum_value || '0');
-            const max = parseInt(payload?.message?.intent?.item?.price?.maximum_value || '999999999');
-            return _searchByPriceRange(min, max);
+            const itemName = payload?.message?.intent?.item?.descriptor?.name || '';
+            const min = parseFloat(payload?.message?.intent?.item?.price?.minimum_value || '0') * 100;
+            const max = parseFloat(payload?.message?.intent?.item?.price?.maximum_value || '999999999') * 100;
+            return _searchByPriceRange(itemName, min, max);
         }
         case 'searchByItemId': {
             const itemId = payload?.message?.intent?.item?.id || '';

@@ -33,7 +33,7 @@ class FarmInventoryRepo {
         return DB.all<FarmInventory>(
             SqlString.format(
                 `select * from farmInventory where productId in 
-                    (SELECT id FROM productCatalog WHERE MATCH(productName, productDescription, variant) AGAINST(? IN NATURAL LANGUAGE MODE)) limit 100`,
+                    (SELECT skuId FROM productCatalog WHERE MATCH(productName, productDescription, variant) AGAINST(? IN NATURAL LANGUAGE MODE)) limit 100`,
                 [itemName]
             ),
             FarmInventory
@@ -50,10 +50,20 @@ class FarmInventoryRepo {
         );
     };
 
-    searchByPriceRange = async (startPriceInPaise: number, endPriceInPaise: number) => {
+    searchByPriceRange = async (itemName: string, startPriceInPaise: number, endPriceInPaise: number) => {
+        if (itemName.length > 0) {
+            return DB.all<FarmInventory>(
+                SqlString.format(
+                    `SELECT * FROM farmInventory WHERE productId IN 
+                    (SELECT skuId FROM productCatalog WHERE MATCH(productName, productDescription, variant) AGAINST(? IN NATURAL LANGUAGE MODE)) and priceInPaise BETWEEN ? AND ? LIMIT 100`,
+                    [itemName, startPriceInPaise, endPriceInPaise]
+                ),
+                FarmInventory
+            )
+        }
         return DB.all<FarmInventory>(
             SqlString.format(
-                `select * from farmInventory where priceInPaise between ? and ? limit 100`,
+                `SELECT * FROM farmInventory WHERE priceInPaise BETWEEN ? AND ? LIMIT 100`,
                 [startPriceInPaise, endPriceInPaise],
             ),
             FarmInventory
