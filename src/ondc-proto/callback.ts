@@ -2,6 +2,7 @@ import {HEADERS, IOndcPayloadContext, PROTOCOL_CONTEXT} from './models';
 import {createAuthorizationHeader} from './crypto';
 import HttpRequest from './HttpRequest';
 import {LOG} from '../common/lib/logger';
+import {update} from 'lodash';
 
 const makeBaseUri = (baseUrl: string) => {
     return baseUrl ? baseUrl.endsWith("/") ? baseUrl : baseUrl + "/" : "";
@@ -15,7 +16,8 @@ const makeBaseUri = (baseUrl: string) => {
 export const bapCallback = async (action: PROTOCOL_CONTEXT, body: { context: IOndcPayloadContext, message: object}) => {
     const header = {[HEADERS.AUTH_TOKEN]: await createAuthorizationHeader(body.message)};
     LOG.info({msg: 'bapCallback', header});
-    const request = new HttpRequest(makeBaseUri(body.context.bap_uri), action, 'POST', body, header);
+    const updatedBody = {...body, context: {...body.context, action}}; // update action of context to ON_XXX
+    const request = new HttpRequest(makeBaseUri(body.context.bap_uri), action, 'POST', updatedBody, header);
     // fire n forget
     try {
         await request.send();

@@ -26,7 +26,7 @@ export const trackHandler = async (payload: any) => {
         context: payload.context,
         message: result
     };
-    LOG.info({msg: 'init handler response', body});
+    LOG.info({msg: 'track handler response', body});
     await bapCallback(PROTOCOL_CONTEXT.ON_TRACK, body);
 }
 
@@ -35,7 +35,7 @@ const handleTrack = async (payload: any) => {
     const order = await orderRepo.getOrderById(orderId);
     return {
         "tracking": {
-            "url": order !== null ? util.format(CONSTANTS.trackingUrl, orderId) : '',
+            "url": order !== null ? CONSTANTS.apiHost + util.format(CONSTANTS.trackingUrl, orderId) : '',
             "status": order?.data?.orderStatus || '',
         }
     }

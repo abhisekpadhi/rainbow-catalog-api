@@ -67,7 +67,10 @@ const handleShareBilling = async (payload: any) => {
     // prepare updated billing
     const billing = payload?.message?.order?.billing
     const order = await orderRepo.getOrderByCtxTxnId(ctxTxnId);
-    let updated: {} = {...order};
+    if (order === null) {
+        return _makeEmptyResponse();
+    }
+    let updated = {...order?.data};
     if (billing !== undefined) {
           updated = {...updated, billing: JSON.stringify(billing)};
     }
@@ -85,8 +88,8 @@ const handleShareBilling = async (payload: any) => {
             },
             "time": {
                 "range": {
-                    "start": `${dayjs().toDate()}`,
-                    "end": `${dayjs().add(CONSTANTS.deliveryPromiseInDays, 'days').toDate()}`,
+                    "start": `${dayjs().toDate().toISOString()}`,
+                    "end": `${dayjs().add(CONSTANTS.deliveryPromiseInDays, 'days').toDate().toISOString()}`,
                 }
             },
             "instructions": {
@@ -102,8 +105,8 @@ const handleShareBilling = async (payload: any) => {
             "location": {},
             "time": {
                 "range": {
-                    "start": `${dayjs().toDate()}`,
-                    "end": `${dayjs().add(CONSTANTS.deliveryPromiseInDays, 'days').toDate()}`,
+                    "start": `${dayjs().toDate().toISOString()}`,
+                    "end": `${dayjs().add(CONSTANTS.deliveryPromiseInDays, 'days').toDate().toISOString()}`,
                 }
             },
             "instructions": {},

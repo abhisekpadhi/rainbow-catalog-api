@@ -36,5 +36,6 @@ export const CONSTANTS = Object.freeze({
     gps: "12.9349377,77.6055586",
     contact: '+917978608446',
     email: 'support@subnub.com',
-    trackingUrl: 'https://ondc.dhoomnow.com/tracking?orderId=%s',
+    apiHost: __DEV__ ? 'http://localhost:3000' : 'https://ondc.dhoomnow.com',
+    trackingUrl: '/tracking?orderId=%s',
 });

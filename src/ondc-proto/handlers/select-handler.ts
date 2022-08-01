@@ -107,7 +107,7 @@ const handleSelectItems = async (payload: any) => {
     });
 
     // prepare quote
-    const subtotal = _.sumBy(items, o => parseFloat(o.price.value));
+    const subtotal = _.sumBy(items, o => parseFloat(o.price.value) * o.quantity.selected.count);
     const quote = {
         "price": {
             "currency": "INR",

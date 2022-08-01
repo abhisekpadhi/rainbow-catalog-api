@@ -6,8 +6,8 @@ import SqlString from 'sqlstring';
 class FarmRepo {
     private readonly table = CONSTANTS.tables.farm;
     private readonly columns = 'farmerId, farmName, farmLocation, providerId, supportPhone, supportEmail, rating';
-    private readonly update = `update ${this.table}`;
-    private readonly insert = `insert into ${this.table}`;
+    private readonly update = `UPDATE ${this.table}`;
+    private readonly insert = `INSERT INTO ${this.table}`;
     searchByStoreName = async (storeName: string) => {
         return DB.all<Farm>(
             SqlString.format(
@@ -57,11 +57,10 @@ class FarmRepo {
         )
     }
     updateFarm = async (data: IFarm) => {
-        const {farmerId, farmName, farmLocation} = data;
         await DB.update(
             SqlString.format(
-                this.insert + ` (farmerId, farmName, farmLocation) values(?, ?, ?)`,
-                [farmerId, farmName, farmLocation]
+                this.update + ' SET ? WHERE providerId = ?',
+                [data, data.providerId]
             )
         );
     }

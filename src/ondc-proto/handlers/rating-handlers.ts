@@ -2,7 +2,7 @@ import {bapCallback} from '../callback';
 import {LOG} from '../../common/lib/logger';
 import {PROTOCOL_CONTEXT} from '../models';
 import ratingRepo from '../../repository/rating-repo';
-import {Farm, Rating} from '../../models/farmer';
+import {Farm, IFarmExtraData, OrderExtraData, Rating} from '../../models/farmer';
 import farmRepo from '../../repository/farm-repo';
 
 const getType = (payload: any) => {
@@ -17,7 +17,7 @@ export const ratingHandler = async (payload: any) => {
     if (type.length === 0) {
         return;
     }
-    LOG.info({msg: `confirmType: ${type}`});
+    LOG.info({msg: `ratingCategory: ${type}`});
     const result = await handleAckRating(payload);
     const body = {
         context: payload.context,
@@ -41,7 +41,7 @@ const handleAckRating = async (payload: any) => {
         return _makeEmptyResponse();
     }
     // save rating in db
-    await ratingRepo.addRating(new Rating({ctxTxnId, payload: payload?.message}).data!);
+    await ratingRepo.addRating(new Rating({ctxTxnId, payload: JSON.stringify(payload?.message)}).data!);
     const ratingCategory = payload?.message?.rating_category || '';
     const ratingValue = payload?.message?.value || 1;
 
@@ -51,13 +51,14 @@ const handleAckRating = async (payload: any) => {
         if (providerId.length > 0) {
             const farm = await farmRepo.getByProviderId(providerId);
             if (farm !== null) {
-                const extraData = {
+                const extraData: IFarmExtraData = {
                     rating: {
                         total: (farm.data?.extraData || '').length > 0 ? (JSON.parse(farm.data!.extraData)?.rating?.total || 0) + ratingValue : ratingValue,
                         count: (farm.data?.extraData || '').length > 0 ? (JSON.parse(farm.data!.extraData)?.rating?.count || 0) + 1 : 1,
                     }
                 }
                 const rating = extraData.rating.total/extraData.rating.count;
+                LOG.info({providerId, rating});
                 await farmRepo.updateFarm(new Farm({...farm.data!, rating, extraData: JSON.stringify(extraData)}).data!);
             }
         }

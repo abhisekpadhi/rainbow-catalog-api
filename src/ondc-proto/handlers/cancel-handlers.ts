@@ -67,8 +67,15 @@ const handleCancelWithNoRefundTerms = async (payload: any) => {
         return _makeEmptyResponse();
     }
     // update db
-    await orderRepo.updateOrder(new Order({...order!.data, orderStatus: OrderStatus.cancelled, extraData: JSON.stringify({cancelReason: reason} as OrderExtraData)}).data!);
-
+    const prevExtra = order!.data!.extraData.length > 0 ? JSON.parse(order!.data!.extraData) : {};
+    await orderRepo.updateOrder(new Order({
+        ...order!.data,
+        orderStatus: OrderStatus.cancelled,
+        extraData: JSON.stringify({
+            ...prevExtra,
+            cancelReason: reason
+        } as OrderExtraData),
+    }).data!);
     return {
         "order": {
             "id": order!.data!.orderId,
