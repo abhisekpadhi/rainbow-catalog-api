@@ -15,12 +15,12 @@ export const updateHandler = async (payload: any) => {
         return;
     }
     LOG.info({msg: `confirmType: ${type}`});
-    const result = await handleUpdate(payload);
-    const body = {
-        context: payload.context,
-        message: result
-    };
-    LOG.info({msg: 'update handler response', body});
+    // const result = await handleUpdate(payload);
+    // const body = {
+    //     context: payload.context,
+    //     message: result
+    // };
+    // LOG.info({msg: 'update handler response', body});
     // for hackathon not implementing update api
     // await bapCallback(PROTOCOL_CONTEXT.ON_UPDATE, body);
 }
