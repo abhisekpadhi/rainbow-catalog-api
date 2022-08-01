@@ -30,6 +30,7 @@ export const CONSTANTS = Object.freeze({
     },
     ondcRequestRedisList: 'ondcRequestList',
     ondcRequestRedisChannel: 'ondcRequestChannel',
+    testChannel: 'testChannel',
     deliveryPromiseInDays: 7,
     name: "DhoomNow",
     gps: "12.9349377,77.6055586",

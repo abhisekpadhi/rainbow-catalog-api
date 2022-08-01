@@ -21,7 +21,8 @@ export const updateHandler = async (payload: any) => {
         message: result
     };
     LOG.info({msg: 'update handler response', body});
-    await bapCallback(PROTOCOL_CONTEXT.ON_UPDATE, body);
+    // for hackathon not implementing update api
+    // await bapCallback(PROTOCOL_CONTEXT.ON_UPDATE, body);
 }
 
 const handleUpdate = async (request: any) => {

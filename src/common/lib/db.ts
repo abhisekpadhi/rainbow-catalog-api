@@ -17,6 +17,21 @@ pool.on('release', function (connection) {
 });
 
 /**
+ * fire-n-forget: Fire queries and don't care about query result
+ * Getting & releasing connection is automatic.
+ * This function only work is execute statements and coerce type on result.
+ * @param stmt: sql statement
+ * @param queryFn: Query function
+ */
+const fnf = async (stmt: string, queryFn?: (stmt: string) => Promise<unknown>) => {
+    let q = queryFn;
+    if (!queryFn) {
+        q = query;
+    }
+    await q!(stmt);
+}
+
+/**
  * Getting & releasing connection is automatic.
  * This function only work is execute statements and coerce type on result.
  * @param stmt: sql statement
@@ -166,4 +181,4 @@ const updateAndGetTxn = async<K>(updateStmts: string[], readStmt: string, klass:
 
 
 
-export const DB = { get, all, update, updateTxn, updateAndGetTxn }
+export const DB = { get, all, update, updateTxn, updateAndGetTxn, fnf }
