@@ -24,6 +24,9 @@ export const makeAck = (ack = true, contextError?: {code: string, path: string, 
 
 export type IEntityType = 'provider' | 'loc' | 'fulfillment' | 'item' | 'payment' | 'billing' | 'order';
 
-export const generateId = () => _.replace(randomUUID(), /-/g, '');
+
+// export const generateId = () => _.replace(randomUUID(), /-/g, '');
+
+export const generateId = () => Date.now().toString() + Math.floor(Math.random() * 100).toString();
 
 export const makeEntityId = (entity: IEntityType, id?: string) => `${entity}_${id === undefined ? generateId() : id}`;
