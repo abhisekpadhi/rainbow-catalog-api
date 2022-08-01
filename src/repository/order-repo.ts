@@ -4,18 +4,19 @@ import {
 } from '../models/farmer';
 import {DB} from '../common/lib/db';
 import SqlString from 'sqlstring';
+import _ from 'lodash';
 
 class OrderRepo {
     private readonly table = CONSTANTS.tables.order;
     private readonly columns = "orderId, customerId, ctxTxnId, createdAt, orderStatus, refundTerms, ff, billing, quote, items, extraData";
-    private readonly insert = `insert into ${this.table}`;
-    private readonly update = `update ${this.table}`;
+    private readonly insert = `INSERT INTO ${this.table} `;
+    private readonly update = `UPDATE ${this.table} `;
 
     getOrderByCtxTxnId = async (ctxTxnId: string) => {
         return DB.get<Order>(
             SqlString.format(
-                `select * from ${this.table} where orderId = ?`,
-                [ctxTxnId]
+                'select * from ?? where ctxTxnId = ?',
+                [this.table, ctxTxnId]
             ),
             Order
         );
@@ -32,11 +33,11 @@ class OrderRepo {
     }
 
     insertOrder = async (data: IOrder) => {
-        const {orderId, customerId, ctxTxnId, createdAt, orderStatus, refundTerms, ff, billing, quote, items, extraData} = data
+        // const {orderId, customerId, ctxTxnId, createdAt, orderStatus, refundTerms, ff, billing, quote, items, extraData} = data
         await DB.updateTxn([
             SqlString.format(
-                this.insert + ` (??) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [orderId, customerId, ctxTxnId, createdAt, orderStatus, refundTerms, ff, billing, quote, items, extraData]
+                this.insert + 'set ?',
+                [_.omit(data, 'id')]
             ),
         ]);
     }

@@ -1,6 +1,7 @@
 import {z} from 'zod';
 import {BaseDTO} from './baseDTO';
-import {entityIdSchema, numberSchema, orderStatusSchema, refundSchema} from './common';
+import {entityIdSchema, numberSchema} from './common';
+import dayjs from 'dayjs';
 
 export const BaseSchema = z.object({
     id: numberSchema,
@@ -140,13 +141,26 @@ export class Rating extends BaseDTO<IRating> {
     }
 }
 
+export enum OrderStatus {
+    created = 'created',
+    active = 'active',
+    cancelled = 'cancelled',
+    delivered = 'delivered',
+    rto = 'rto'
+}
+
+export enum OrderRefundTerms {
+    refundAllowed = 'refund-allowed',
+    refundNotAllowed = 'refund-not-allowed',
+}
+
 export const OrderSchema = BaseSchema.extend({
     orderId: entityIdSchema,
-    customerId: entityIdSchema,
-    ctxTxnId: z.string().default(''),
-    createdAt: numberSchema,
-    orderStatus: orderStatusSchema,
-    refundTerms: refundSchema,
+    customerId: entityIdSchema.default(''),
+    ctxTxnId: z.string().max(256).default(''),
+    createdAt: numberSchema.default(dayjs().valueOf()),
+    orderStatus: z.nativeEnum(OrderStatus).default(OrderStatus.created),
+    refundTerms: z.nativeEnum(OrderRefundTerms).default(OrderRefundTerms.refundNotAllowed),
     ff: z.string().default(''),
     billing: z.string().default(''),
     quote: z.string().default(''),
@@ -183,9 +197,3 @@ export class OrderPayment extends BaseDTO<IOrderPayment> {
     }
 }
 
-export enum OrderStatus {
-    active = 'active',
-    cancelled = 'cancelled',
-    delivered = 'delivered',
-    rto = 'rto'
-}

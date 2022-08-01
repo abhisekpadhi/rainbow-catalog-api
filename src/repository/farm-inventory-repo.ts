@@ -21,7 +21,7 @@ class FarmInventoryRepo {
     getByMultipleItemIds = async (itemIds: string[]) => {
         return DB.all<FarmInventory>(
             SqlString.format(
-                `select * from farmInventory where itemId in (??)`,
+                'select * from farmInventory where itemId in (?)',
                 [itemIds]
             ),
             FarmInventory

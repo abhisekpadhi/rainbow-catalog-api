@@ -4,7 +4,7 @@ import {PROTOCOL_CONTEXT} from '../models';
 import farmInventoryRepo from '../../repository/farm-inventory-repo';
 import _ from 'lodash';
 import orderRepo from '../../repository/order-repo';
-import {Order} from '../../models/farmer';
+import {Order, OrderStatus} from '../../models/farmer';
 import {makeEntityId} from '../response-makers';
 import dayjs from 'dayjs';
 
@@ -126,14 +126,14 @@ const handleSelectItems = async (payload: any) => {
     }
     // save updated cart in db, order created first time here
     const updatedOrder = new Order({
-        ...order!.data,
+        ...order?.data,
         orderId: order !== null ? order.data!.orderId : makeEntityId('order'),
         ctxTxnId,
         createdAt: order !== null ? order.data!.createdAt : dayjs().valueOf(),
         items: JSON.stringify(items),
         quote: JSON.stringify(quote),
     });
-    await orderRepo.updateOrder(updatedOrder.data!)
+    await (order === null ? orderRepo.insertOrder : orderRepo.updateOrder)(updatedOrder.data!)
     const emptyResponse = _makeEmptyResponse()
     return {
         ...emptyResponse,
@@ -151,7 +151,7 @@ const handleSelectOffers = async (payload: any) => {
         return _makeEmptyResponse();
     }
     // we don't have offers and addons yet, just return the cart
-    const order = await orderRepo.getOrderByCtxTxnId(payload);
+    const order = await orderRepo.getOrderByCtxTxnId(ctxTxnId);
     if (order === null) {
         return _makeEmptyResponse();
     }

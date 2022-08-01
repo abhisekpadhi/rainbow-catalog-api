@@ -3,6 +3,7 @@
 // ...
 
 import {randomUUID} from 'crypto';
+import _ from 'lodash';
 
 export const makeAck = (ack = true, contextError?: {code: string, path: string, message: string}) => {
     const res: Partial<{message: any, error: any}> = {
@@ -23,6 +24,6 @@ export const makeAck = (ack = true, contextError?: {code: string, path: string, 
 
 export type IEntityType = 'provider' | 'loc' | 'fulfillment' | 'item' | 'payment' | 'billing' | 'order';
 
-export const generateId = () => randomUUID().replaceAll('-', '');
+export const generateId = () => _.replace(randomUUID(), /-/g, '');
 
 export const makeEntityId = (entity: IEntityType, id?: string) => `${entity}_${id === undefined ? generateId() : id}`;
