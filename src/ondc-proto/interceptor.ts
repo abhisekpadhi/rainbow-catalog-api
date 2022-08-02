@@ -5,6 +5,7 @@ import {z} from 'zod';
 import {OndcPayloadContextSchema} from './models';
 import _ from 'lodash';
 import {ONDC_ERROR_CODES} from './error-codes';
+import {LOG} from '../common/lib/logger';
 
 /**
  * validates context schema
@@ -43,6 +44,11 @@ const payloadValidityCheck = (payload: any): {path: string, message: string} | n
  * @param next: expressjs NextFunction
  */
 export async function ondcInterceptor (req: Request, res: Response, next: NextFunction) {
+    const allowAll = req.path.startsWith('/_/'); // diagnostics endpoints
+    if (allowAll) {
+        next();
+        LOG.info({msg: 'ondcInterceptor bypassed'});
+    }
     if (req.headers.host) {
         if (req.headers.host.includes(process.env.SUBSCRIBER_ID!)) {
             const valid = await isRequestValid(req.headers, req.body)

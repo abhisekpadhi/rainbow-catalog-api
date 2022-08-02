@@ -109,13 +109,17 @@ createdAt
 - Config of mysql and redis can be changed at [constants](src/CONSTANTS.ts) and [client](src/common/clients.ts)
 - Copy `_.env` into `.env` and populate config
 - Install deps, fire this command
-    ```shell
-    yarn
-    ```
+  ```shell
+  yarn
+  ```
+- Build once
+  ```shell
+  yarn build
+  ```
 - Start expressjs server, fire this command
-    ```shell
-    yarn dev
-    ```
+  ```shell
+  yarn dev
+  ```
 - Load [postman collection](Rainbow%20catalog%20-%20ONDC.postman_collection.json) to play around with the API's
 - Entities and request/response schemas are in [model](src/models)
 - Request flow: 
