@@ -14,6 +14,6 @@ app.use('/tracking', OndcTrackingRouter);
 app.use('/_', DiagnosticsRouter);
 
 // start server
-app.listen(port, host, () => {
+app.listen(port, () => {
     console.log(`⚡️ Server running from main.ts at http://${host}:${port}`);
 });

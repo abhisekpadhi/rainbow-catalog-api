@@ -27,9 +27,10 @@ router.get('/healthz', async (req, res) => {
     } catch (e) {
         LOG.info({msg:'cache exception', error: e});
     }
+    let subscriber;
     try {
+        subscriber = cache.duplicate()
         let flag = 0;
-        const subscriber  = cache.duplicate();
         await subscriber.connect();
         await subscriber.subscribe(CONSTANTS.testChannel, async () => {
             flag = 1;
@@ -40,8 +41,11 @@ router.get('/healthz', async (req, res) => {
         if (flag === 1) {
             result.mq = 'ok'
         }
+        await subscriber?.unsubscribe(CONSTANTS.testChannel);
     } catch (e) {
         LOG.info({msg: 'mq exception', error: e});
+    } finally {
+        await subscriber?.unsubscribe(CONSTANTS.testChannel);
     }
     res.json(result);
 });

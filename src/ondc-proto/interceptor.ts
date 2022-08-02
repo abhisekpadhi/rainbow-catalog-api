@@ -48,6 +48,7 @@ export async function ondcInterceptor (req: Request, res: Response, next: NextFu
     if (allowAll) {
         next();
         LOG.info({msg: 'ondcInterceptor bypassed'});
+        return;
     }
     if (req.headers.host) {
         if (req.headers.host.includes(process.env.SUBSCRIBER_ID!)) {

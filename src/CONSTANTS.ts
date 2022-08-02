@@ -6,13 +6,13 @@ export const CONSTANTS = Object.freeze({
     joinCodeLen: 6,
     startingCoinBalance: 30,
     otpLen: 4,
-    cache: 'redis://localhost',
+    cache: process.env.CACHE_URL,
     db: {
         connectionLimit : 30,
-        host            : __DEV__ ? 'localhost' : process.env.DB_HOST,
-        user            : __DEV__ ? 'root' : process.env.DB_USER,
-        password        : __DEV__ ? 'password' : process.env.DB_PASSWORD,
-        database        : __DEV__ ? 'rainbow-catalog' : process.env.DB_NAME
+        host            : process.env.DB_HOST,
+        user            : process.env.DB_USER,
+        password        : process.env.DB_PASSWORD,
+        database        : process.env.DB_NAME
     },
     tables: {
         farm: 'farm',
@@ -37,6 +37,6 @@ export const CONSTANTS = Object.freeze({
     gps: "12.9349377,77.6055586",
     contact: '+917978608446',
     email: 'support@subnub.com',
-    apiHost: __DEV__ ? 'http://localhost:3000' : 'https://ondc.dhoomnow.com',
+    apiHost: process.env.API_HOST,
     trackingUrl: '/tracking?orderId=%s',
 });
