@@ -6,12 +6,13 @@ export const CONSTANTS = Object.freeze({
     joinCodeLen: 6,
     startingCoinBalance: 30,
     otpLen: 4,
+    cache: 'redis://localhost',
     db: {
         connectionLimit : 30,
-        host            : 'localhost',
-        user            : 'root',
-        password        : 'password',
-        database        : 'rainbow-catalog'
+        host            : __DEV__ ? 'localhost' : process.env.DB_HOST,
+        user            : __DEV__ ? 'root' : process.env.DB_USER,
+        password        : __DEV__ ? 'password' : process.env.DB_PASSWORD,
+        database        : __DEV__ ? 'rainbow-catalog' : process.env.DB_NAME
     },
     tables: {
         farm: 'farm',

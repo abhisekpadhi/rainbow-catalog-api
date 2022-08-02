@@ -107,6 +107,7 @@ createdAt
 - Import the [ddl](ddl.sql) file into the mysql repl
 - Start a redis server
 - Config of mysql and redis can be changed at [constants](src/CONSTANTS.ts) and [client](src/common/clients.ts)
+- Copy `_.env` into `.env` and populate config
 - Install deps, fire this command
     ```shell
     yarn
