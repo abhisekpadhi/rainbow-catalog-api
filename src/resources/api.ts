@@ -78,5 +78,8 @@ router.get('/catalog/sku', handleGetProductSku);
 router.get('/inventory', handleGetInventory);
 router.get('/inventory/ledger', handleGetInventoryLedger);
 router.post('/inventory/update', handleUpdateInventory);
+router.get('/ondc-site-verification.html', (req, res) => {
+    res.render('ondc-site-verification');
+})
 
 export { router };
