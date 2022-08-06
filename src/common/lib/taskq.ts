@@ -6,9 +6,17 @@ interface ITaskQ {
     dequeue: (qname?: string) => Promise<string | null>;
 }
 
-class OndcTaskQRedisImpl implements ITaskQ {
-    private readonly qname = CONSTANTS.ondcRequestRedisList;
-    private readonly chname = CONSTANTS.ondcRequestRedisChannel
+export class TaskQRedisImpl implements ITaskQ {
+    private readonly qname: string;
+    private readonly chname: string;
+    constructor(
+        qname: string = CONSTANTS.ondcRequestRedisList,
+        chname: string = CONSTANTS.ondcRequestRedisChannel
+    ) {
+        this.qname = qname;
+        this.chname = chname;
+    }
+
     enqueue = async (payload: string) => {
         // add task to redis list
         await cache.lPush(this.qname, payload)
@@ -20,4 +28,4 @@ class OndcTaskQRedisImpl implements ITaskQ {
     }
 }
 
-export const OndcTaskQ = new OndcTaskQRedisImpl();
+export const TaskQ = new TaskQRedisImpl();

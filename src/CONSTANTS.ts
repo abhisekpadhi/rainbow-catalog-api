@@ -6,6 +6,7 @@ export const CONSTANTS = Object.freeze({
     joinCodeLen: 6,
     startingCoinBalance: 30,
     otpLen: 4,
+    otpExpiresInSeconds: 300,
     cache: process.env.CACHE_URL,
     db: {
         connectionLimit : 30,
@@ -41,4 +42,6 @@ export const CONSTANTS = Object.freeze({
     apiHost: process.env.API_HOST,
     trackingUrl: '/tracking?orderId=%s',
     buyerFinderFee: 0.02,
+    bgTaskRedisList: 'bgTaskList',
+    bgTaskRedisChannel: 'bgTaskChannel',
 });

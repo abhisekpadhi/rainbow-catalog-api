@@ -1,7 +1,7 @@
 import {
     Farm,
     IFarm,
-    IFarmer, IFarmInventory, IFarmInventoryLedger,
+    IFarmer, IFarmerLoginRequest, IFarmInventory, IFarmInventoryLedger,
     IFarmPrefs, IInventoryResponse, IInventoryUpdateRequest,
     IProductCatalog,
     ProductCatalog,
@@ -15,16 +15,45 @@ import ProductCatalogRepo from '../repository/product-catalog-repo';
 import FarmInventoryRepo from '../repository/farm-inventory-repo';
 import {cache} from '../common/clients';
 import {makeEntityId} from '../ondc-proto/response-makers';
+import {constructJwt, generateRandomNDigits} from '../common/lib/jwt';
+import {CONSTANTS} from '../CONSTANTS';
+import _ from 'lodash';
+import {TaskQRedisImpl} from '../common/lib/taskq';
 
-export const login = async (payload: IFarmer) => {
-    let farmer = await FarmerRepo.getByPhone(payload.phone)
-    if (farmer) {
-        return {farmer: farmer.toPlainObject()}
-    } else {
-        await FarmerRepo.updateFarmer(payload)
-        farmer = await FarmerRepo.getByPhone(payload.phone)
-        return {farmer: farmer?.toPlainObject()}
+const getOtpCacheKey = (phone: string) => 'otp:'+phone;
+
+const taskQ = new TaskQRedisImpl(CONSTANTS.bgTaskRedisList, CONSTANTS.bgTaskRedisChannel);
+
+// supports only indian phone numbers
+export const otpRequest = async (payload: IFarmer) => {
+    const {phone} = payload;
+    LOG.info({phone});
+    if (_.isEmpty(phone) || phone.length < 10) {
+        return {message: 'farmer phone must be at least 10 digits', status: 400}
     }
+    const otp = generateRandomNDigits();
+    await cache.setEx(getOtpCacheKey(payload.phone), CONSTANTS.otpExpiresInSeconds, otp);
+    const task = {type: 'otp', body: { to: '+91'+payload.phone.slice(-10), message: otp + ' is your ONDC OTP.'}};
+    await taskQ.enqueue(JSON.stringify(task));
+    return {message: 'ok'};
+}
+
+export const login = async (payload: IFarmerLoginRequest) => {
+    const {farmer, otp} = payload;
+    if (_.isEmpty(farmer.phone)) {
+        return {message: 'farmer phone must not be empty', status: 400}
+    }
+    const otpInCache = await cache.get(getOtpCacheKey(farmer.phone));
+    if (otpInCache === null || otpInCache !== otp) {
+        return {message: 'otp invalid or expired, try again', status: 401};
+    }
+    let existing = await FarmerRepo.getByPhone(farmer.phone)
+    if (existing === null) {
+        await FarmerRepo.updateFarmer(farmer)
+        existing = await FarmerRepo.getByPhone(farmer.phone)
+    }
+    const jwt = await constructJwt({farmerId: existing?.data?.id || ''})
+    return {farmer: existing?.toPlainObject(), jwt};
 }
 
 export const getFarmsOfFarmer = async (payload: {farmerId: number}) => {

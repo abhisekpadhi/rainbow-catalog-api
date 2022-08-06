@@ -61,7 +61,7 @@ const processTask = async (payload: ITaskPayload) => {
 
 // subscriber to redis channel, pop's a task item from redis list and processes it
 const subscribe = async () => {
-    LOG.info('subscription started...')
+    LOG.info('ondc request redis subscription started...')
     await subscriber.subscribe(CONSTANTS.ondcRequestRedisChannel, async (message) => {
         const task = await cache.rPop(CONSTANTS.ondcRequestRedisList)
         if (task !== null && task.length > 0) {
@@ -73,7 +73,7 @@ const subscribe = async () => {
 
 (async () => {
     await subscriber.connect();
-    LOG.info('redis subscriber connected')
+    LOG.info('ondc worker redis subscriber connected')
     await subscribe();
 })();
 

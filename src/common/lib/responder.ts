@@ -14,7 +14,7 @@ const post = async (req: Request, res: Response, schema: ZodObject<any>, handler
             errors = 'server error'
         }
     }
-    res.send({data, errors})
+    res.status(data?.status || 200).send({data, errors})
 }
 
 const get = async (req: Request, res: Response, handlerFn: Function) => {
@@ -25,7 +25,7 @@ const get = async (req: Request, res: Response, handlerFn: Function) => {
     } catch (e) {
         errors = 'server error'
     }
-    res.send({data, errors})
+    res.status(data?.status || 200).send({data, errors})
 }
 
 export const Responder = { ofPost: post, ofGet: get }

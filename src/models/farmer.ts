@@ -47,6 +47,12 @@ export class Farmer extends BaseDTO<IFarmer> {
     }
 }
 
+export const FarmerLoginSchema = BaseSchema.extend({
+    farmer: FarmerSchema,
+    otp: z.string().max(4).default(''),
+})
+
+export type IFarmerLoginRequest = z.infer<typeof FarmerLoginSchema>;
 
 export const FarmInventorySchema = BaseSchema.extend({
     farmId: numberSchema,

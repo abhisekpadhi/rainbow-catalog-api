@@ -55,4 +55,4 @@ router.get('/ping', async (req, res) => {
     res.send('pong');
 });
 
-export const DiagnosticsRouter = router;
+export const DiganosticsApi = router;
