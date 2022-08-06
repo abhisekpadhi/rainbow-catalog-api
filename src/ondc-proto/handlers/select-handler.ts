@@ -4,7 +4,7 @@ import {PROTOCOL_CONTEXT} from '../models';
 import farmInventoryRepo from '../../repository/farm-inventory-repo';
 import _ from 'lodash';
 import orderRepo from '../../repository/order-repo';
-import {Order, OrderStatus} from '../../models/farmer';
+import {BuyerOrder} from '../../models/farmer';
 import {makeEntityId} from '../response-makers';
 import dayjs from 'dayjs';
 
@@ -72,7 +72,7 @@ const handleSelectItems = async (payload: any) => {
     if (requestedItems.length === 0) {
         // empty out the cart in db
         if (order !== null) {
-            const updatedOrder = new Order({...order!.data, items: '', quote: ''});
+            const updatedOrder = new BuyerOrder({...order!.data, items: '', quote: ''});
             await orderRepo.updateOrder(updatedOrder.data!);
         }
         // respond
@@ -125,7 +125,7 @@ const handleSelectItems = async (payload: any) => {
         "ttl": "P4D"
     }
     // save updated cart in db, order created first time here
-    const updatedOrder = new Order({
+    const updatedOrder = new BuyerOrder({
         ...order?.data,
         orderId: order !== null ? order.data!.orderId : makeEntityId('order'),
         ctxTxnId,

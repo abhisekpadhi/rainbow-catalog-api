@@ -23,6 +23,7 @@ export const CONSTANTS = Object.freeze({
         productCatalog: 'productCatalog',
         ondcSubscriberInfo: 'ondcSubscriberInfo',
         order: 'buyerOrder',
+        sellerOrder: 'sellerOrder',
         orderPayment: 'orderPayment',
         rating: 'rating',
     },
@@ -39,4 +40,5 @@ export const CONSTANTS = Object.freeze({
     email: 'support@subnub.com',
     apiHost: process.env.API_HOST,
     trackingUrl: '/tracking?orderId=%s',
+    buyerFinderFee: 0.02,
 });

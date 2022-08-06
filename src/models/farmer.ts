@@ -141,12 +141,26 @@ export class Rating extends BaseDTO<IRating> {
     }
 }
 
+/**
+ * - Created
+ *             - Packed
+ *             - Shipped
+ *             - Out for Delivery
+ *             - Delivered
+ *             - RTO initiated
+ *             - RTO delivered
+ *             - Cancelled
+ */
 export enum OrderStatus {
-    created = 'created',
-    active = 'active',
-    cancelled = 'cancelled',
-    delivered = 'delivered',
-    rto = 'rto'
+    active = 'Active',
+    created = 'Created',
+    rts='Packed',
+    shipped='Shipped',
+    ofd='Out for Delivery',
+    delivered = 'Delivered',
+    cancelled = 'Cancelled',
+    rtoi = 'RTO initiated',
+    rtod = 'RTO delivered',
 }
 
 export enum OrderRefundTerms {
@@ -154,30 +168,52 @@ export enum OrderRefundTerms {
     refundNotAllowed = 'refund-not-allowed',
 }
 
-export const OrderSchema = BaseSchema.extend({
+export const BuyerOrderScheme = BaseSchema.extend({
     orderId: entityIdSchema,
     customerId: entityIdSchema.default(''),
     ctxTxnId: z.string().max(256).default(''),
     createdAt: numberSchema.default(dayjs().valueOf()),
-    orderStatus: z.nativeEnum(OrderStatus).default(OrderStatus.created),
+    orderStatus: z.nativeEnum(OrderStatus).default(OrderStatus.active),
     refundTerms: z.nativeEnum(OrderRefundTerms).default(OrderRefundTerms.refundNotAllowed),
     ff: z.string().default(''),
     billing: z.string().default(''),
     quote: z.string().default(''),
     items: z.string().default(''),
     extraData: z.string().default(''),
+    cancellation: z.string().default(''),
 });
 
-export type IOrder = z.infer<typeof OrderSchema>;
+export type IBuyerOrder = z.infer<typeof BuyerOrderScheme>;
 
-export class Order extends BaseDTO<IOrder> {
-    constructor(payload: Partial<IOrder>) {
-        super(OrderSchema.parse(payload));
+export class BuyerOrder extends BaseDTO<IBuyerOrder> {
+    constructor(payload: Partial<IBuyerOrder>) {
+        super(BuyerOrderScheme.parse(payload));
     }
 }
 
-export interface OrderExtraData {
+export type OrderCancelledBy = 'buyer-app' | 'seller-app' | 'logistics-provider';
+export interface BuyerOrderExtraData {
+    cancelledBy?: OrderCancelledBy,
     cancelReason?: string;
+}
+
+export const SellerOrderSchema = BaseSchema.extend({
+    sellerOrderId: entityIdSchema,
+    sellerProviderId: entityIdSchema,
+    buyerOrderId: entityIdSchema,
+    items: z.string().default(''),
+    quote: z.string().default(''),
+    orderStatus: z.nativeEnum(OrderStatus).default(OrderStatus.created),
+    createdAt: z.number().default(dayjs().valueOf),
+    extraData: z.string().default(''),
+});
+
+export type ISellerOrder = z.infer<typeof SellerOrderSchema>;
+
+export class SellerOrder extends BaseDTO<ISellerOrder> {
+    constructor(payload: Partial<ISellerOrder>) {
+        super(SellerOrderSchema.parse(payload));
+    }
 }
 
 export const OrderPaymentSchema = BaseSchema.extend({

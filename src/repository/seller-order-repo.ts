@@ -1,38 +1,38 @@
 import {CONSTANTS} from '../CONSTANTS';
 import {
-    IBuyerOrder, BuyerOrder
+    SellerOrder, ISellerOrder
 } from '../models/farmer';
 import {DB} from '../common/lib/db';
 import SqlString from 'sqlstring';
 import _ from 'lodash';
 
-class OrderRepo {
-    private readonly table = CONSTANTS.tables.order;
-    private readonly columns = "orderId, customerId, ctxTxnId, createdAt, orderStatus, refundTerms, ff, billing, quote, items, extraData, cancellation";
+class SellerOrderRepo {
+    private readonly table = CONSTANTS.tables.sellerOrder;
+    private readonly columns = "sellerProviderId, buyerProviderId, items, quote, orderStatus, createdAt, extraData";
     private readonly insert = `INSERT INTO ${this.table} `;
     private readonly update = `UPDATE ${this.table} `;
 
-    getOrderByCtxTxnId = async (ctxTxnId: string) => {
-        return DB.get<BuyerOrder>(
+    getByBuyerOrderId = async (buyerOrderId: string) => {
+        return DB.all<SellerOrder>(
             SqlString.format(
-                'select * from ?? where ctxTxnId = ?',
-                [this.table, ctxTxnId]
+                'select * from ?? where buyerOrderId = ?',
+                [this.table, buyerOrderId]
             ),
-            BuyerOrder
+            SellerOrder
         );
     }
 
-    getOrderById = async (orderId: string) => {
-        return DB.get<BuyerOrder>(
+    getOrderSellerOrderId = async (orderId: string) => {
+        return DB.get<SellerOrder>(
             SqlString.format(
                 `select * from ${this.table} where orderId = ?`,
                 [orderId]
             ),
-            BuyerOrder
+            SellerOrder
         );
     }
 
-    insertOrder = async (data: IBuyerOrder) => {
+    insertOrder = async (data: ISellerOrder) => {
         // const {orderId, customerId, ctxTxnId, createdAt, orderStatus, refundTerms, ff, billing, quote, items, extraData} = data
         await DB.updateTxn([
             SqlString.format(
@@ -42,7 +42,7 @@ class OrderRepo {
         ]);
     }
 
-    updateOrder = async (data: IBuyerOrder) => {
+    updateOrder = async (data: ISellerOrder) => {
         await DB.updateTxn([
             SqlString.format(
                 this.update + ` set ?`,
@@ -52,4 +52,4 @@ class OrderRepo {
     }
 }
 
-export default new OrderRepo();
+export default new SellerOrderRepo();

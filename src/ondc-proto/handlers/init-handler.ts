@@ -2,7 +2,7 @@ import {bapCallback} from '../callback';
 import {LOG} from '../../common/lib/logger';
 import {PROTOCOL_CONTEXT} from '../models';
 import orderRepo from '../../repository/order-repo';
-import {Order} from '../../models/farmer';
+import {BuyerOrder} from '../../models/farmer';
 import dayjs from 'dayjs';
 import {CONSTANTS} from '../../CONSTANTS';
 
@@ -120,7 +120,7 @@ const handleShareBilling = async (payload: any) => {
         ...updated,
         ff: JSON.stringify(ff),
     }
-    const updatedOrder = new Order(updated);
+    const updatedOrder = new BuyerOrder(updated);
     await orderRepo.updateOrder(updatedOrder.data!);
     // respond
     return  {
@@ -150,7 +150,7 @@ const handleShareFFShipping = async (payload: any) => {
     if (order === null) {
         return _makeEmptyResponse();
     }
-    const updatedOrder = new Order({...order!.data, ff: JSON.stringify(ff)});
+    const updatedOrder = new BuyerOrder({...order!.data, ff: JSON.stringify(ff)});
     await orderRepo.updateOrder(updatedOrder.data!);
 
     // respond with billing, ff, quote, pricing || quote & pricing does not change

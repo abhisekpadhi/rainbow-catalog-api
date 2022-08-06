@@ -22,7 +22,10 @@ export const makeAck = (ack = true, contextError?: {code: string, path: string, 
     return res;
 }
 
-export type IEntityType = 'provider' | 'loc' | 'fulfillment' | 'item' | 'payment' | 'billing' | 'order';
+/**
+ * so: Seller order
+ */
+export type IEntityType = 'provider' | 'loc' | 'fulfillment' | 'item' | 'payment' | 'billing' | 'order' | 'so';
 
 
 // export const generateId = () => _.replace(randomUUID(), /-/g, '');

@@ -2,7 +2,7 @@ import {bapCallback} from '../callback';
 import {LOG} from '../../common/lib/logger';
 import {PROTOCOL_CONTEXT} from '../models';
 import orderRepo from '../../repository/order-repo';
-import {Order, OrderStatus} from '../../models/farmer';
+import {BuyerOrder, OrderStatus} from '../../models/farmer';
 import dayjs from 'dayjs';
 
 const getType = (payload: any) => {
@@ -54,7 +54,7 @@ const handleCheckStatus = async (payload: any) => {
         return _makeEmptyResponse();
     }
     // update order status in db
-    await orderRepo.updateOrder(new Order({...order!.data!, orderStatus: OrderStatus.active}).data!);
+    await orderRepo.updateOrder(new BuyerOrder({...order!.data!, orderStatus: OrderStatus.active}).data!);
     return {
         "order": {
             "id": order!.data!.orderId,

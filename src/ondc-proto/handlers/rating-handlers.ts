@@ -2,7 +2,7 @@ import {bapCallback} from '../callback';
 import {LOG} from '../../common/lib/logger';
 import {PROTOCOL_CONTEXT} from '../models';
 import ratingRepo from '../../repository/rating-repo';
-import {Farm, IFarmExtraData, OrderExtraData, Rating} from '../../models/farmer';
+import {Farm, IFarmExtraData, BuyerOrderExtraData, Rating} from '../../models/farmer';
 import farmRepo from '../../repository/farm-repo';
 
 const getType = (payload: any) => {

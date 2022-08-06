@@ -2,8 +2,13 @@ import {bapCallback} from '../callback';
 import {LOG} from '../../common/lib/logger';
 import {PROTOCOL_CONTEXT} from '../models';
 import orderRepo from '../../repository/order-repo';
-import {Order, OrderStatus} from '../../models/farmer';
+import {BuyerOrder, OrderStatus, SellerOrder} from '../../models/farmer';
 import dayjs from 'dayjs';
+import farmInventoryRepo from '../../repository/farm-inventory-repo';
+import farmRepo from '../../repository/farm-repo';
+import _ from 'lodash';
+import {makeEntityId} from '../response-makers';
+import sellerOrderRepo from '../../repository/seller-order-repo';
 
 const getType = (payload: any) => {
     if (payload?.message?.order?.payment?.type !== undefined) {
@@ -63,11 +68,72 @@ const handleConfirm = async (payload: any) => {
         return _makeEmptyResponse();
     }
     // update order status in db
-    await orderRepo.updateOrder(new Order({...order!.data!, orderStatus: OrderStatus.active}).data!);
+    await orderRepo.updateOrder(new BuyerOrder({...order!.data!, orderStatus: OrderStatus.created}).data!);
+    // split buyerOrder into multiple sellerOrders
+    const itemDetailsList: {
+        providerId: string,
+        unitPriceInPaise: number,
+        id: string,
+        quantity: {
+            count: number
+        }}[] = [];
+    const ondcItems: {id: string, quantity: {count: number}}[] = JSON.parse(order!.data!.items);
+    for (const item of ondcItems) {
+        if ('id' in item) {
+            const inventory = await farmInventoryRepo.getByMultipleItemIds([item['id']]);
+            if (inventory !== null) {
+                if (inventory!.length > 0) {
+                    const farmId = inventory![0].data?.farmId || 0;
+                    if (farmId > 0) {
+                        const farm = await farmRepo.getByFarmId(farmId)
+                        if (farm !== null) {
+                            itemDetailsList.push({
+                                ...item,
+                                providerId: farm.data?.providerId || '',
+                                unitPriceInPaise: inventory![0].data?.priceInPaise || 0,
+                            });
+                        }
+                    }
+                }
+            }
+        }
+    }
+    const itemsGroupedByProvider = _.groupBy(itemDetailsList, o => o.providerId);
+    for (const providerId of Object.keys(itemsGroupedByProvider)) {
+        const enrichedItems = itemsGroupedByProvider[providerId];
+        const subtotal = _.sumBy(enrichedItems, o => o.quantity.count * o.unitPriceInPaise);
+        const items = enrichedItems.map(o => _.omit(o, 'providerId', 'priceInPaise'))
+        const quote = {
+            "price": {
+                "currency": "INR",
+                "value": subtotal
+            },
+            "breakup": [
+                {
+                    "title": "subtotal",
+                    "price": {
+                        "currency": "INR",
+                        "value": subtotal
+                    }
+                },
+            ],
+            "ttl": "P4D"
+        }
+        const so = new SellerOrder({
+            sellerOrderId: makeEntityId('so'),
+            sellerProviderId: providerId,
+            buyerOrderId: order.data?.orderId || '',
+            items: JSON.stringify(items),
+            quote: JSON.stringify(quote),
+            orderStatus: OrderStatus.created,
+        });
+        await sellerOrderRepo.insertOrder(so.data!);
+    }
+
     return {
         "order": {
             "id": order!.data!.orderId,
-            "state": OrderStatus.active,
+            "state": OrderStatus.created,
             "items": JSON.parse(order!.data!.items),
             "billing": JSON.parse(order!.data!.billing),
             "fulfillment": JSON.parse(order!.data!.ff),

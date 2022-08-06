@@ -2,7 +2,7 @@ import {bapCallback} from '../callback';
 import {LOG} from '../../common/lib/logger';
 import {PROTOCOL_CONTEXT} from '../models';
 import orderRepo from '../../repository/order-repo';
-import {Order, OrderExtraData, OrderStatus} from '../../models/farmer';
+import {BuyerOrder, BuyerOrderExtraData, OrderCancelledBy, OrderStatus} from '../../models/farmer';
 import dayjs from 'dayjs';
 
 const getType = (payload: any) => {
@@ -56,7 +56,7 @@ const _paymentResponse = {
     "status": "NOT-PAID"
 }
 
-const handleCancelWithNoRefundTerms = async (payload: any) => {
+const handleCancelWithNoRefundTerms = async (payload: any, cancelledBy: OrderCancelledBy = 'buyer-app') => {
     const reason = payload?.message?.cancellation_reason_id || '';
     const orderId = payload?.message?.order_id || '';
     if (orderId.length === 0) {
@@ -68,13 +68,14 @@ const handleCancelWithNoRefundTerms = async (payload: any) => {
     }
     // update db
     const prevExtra = order!.data!.extraData.length > 0 ? JSON.parse(order!.data!.extraData) : {};
-    await orderRepo.updateOrder(new Order({
+    await orderRepo.updateOrder(new BuyerOrder({
         ...order!.data,
         orderStatus: OrderStatus.cancelled,
         extraData: JSON.stringify({
             ...prevExtra,
-            cancelReason: reason
-        } as OrderExtraData),
+            cancelledBy,
+            cancelReason: reason,
+        } as BuyerOrderExtraData),
     }).data!);
     return {
         "order": {
@@ -87,8 +88,6 @@ const handleCancelWithNoRefundTerms = async (payload: any) => {
             "payment": _paymentResponse,
             "created_at": dayjs(order!.data!.createdAt).toDate().toISOString(),
             "updated_at": dayjs().toDate().toISOString(),
-
         }
     }
-
 }
