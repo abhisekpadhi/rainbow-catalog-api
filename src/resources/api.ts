@@ -1,6 +1,6 @@
 import express, {Request, Response} from 'express';
 import {Responder} from '../common/lib/responder';
-import {FarmerLoginSchema, FarmerSchema, FarmSchema} from '../models/farmer';
+import {FarmerLoginSchema, FarmerSchema, FarmSchema, InventoryUpdateRequestSchema} from '../models/farmer';
 import {
     createOrUpdateFarm,
     getFarmInventory,
@@ -53,7 +53,8 @@ const RequestPathHandlerMapping: {[k: string]: { hf: (payload: any) => any  | un
         hf: getInventoryLedger
     },
     'post:/inventory/update': {
-        hf: updateInventory
+        hf: updateInventory,
+        s: InventoryUpdateRequestSchema
     },
 }
 

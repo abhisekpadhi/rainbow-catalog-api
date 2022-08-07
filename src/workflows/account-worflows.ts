@@ -99,7 +99,7 @@ export const getFarmPrefs = async (payload: {farmId: number}) => {
 
 export const updateFarmPrefs = async (payload: IFarmPrefs) => {
     await FarmPrefsRepo.updateFarmPrefs(payload);
-    return "ok"
+    return {message: 'ok'};
 }
 
 export const updateCatalog = async (row: any) => {
@@ -208,6 +208,7 @@ export const getInventoryLedger = async (payload: {farmId: number}) => {
 }
 
 export const updateInventory = async (payload: IInventoryUpdateRequest) => {
+    LOG.info({msg: 'in updateInventory'});
     const inventory = await FarmInventoryRepo.getInventorySku(payload.farmId, payload.productId);
     if (inventory === null && payload.op === 'remove') {
         return "cannot remove from oos sku"
@@ -240,5 +241,5 @@ export const updateInventory = async (payload: IInventoryUpdateRequest) => {
         createdAt: Date.now()
     }
     await FarmInventoryRepo.updateFarmInventory(ledgerEntry, inventoryUpdate)
-    return "ok";
+    return {message: 'ok'};
 }

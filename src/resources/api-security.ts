@@ -9,11 +9,10 @@ export async function authInterceptor(req: Request, res: Response, next: NextFun
         next();
         return;
     }
-    const jwt = req.headers?.authorization;
+    const jwt = req.headers?.authorization?.replace('Bearer ', '');
     if (jwt !== undefined && jwt.length > 0) {
         try {
             const payload = await validateJwt(jwt);
-            LOG.info({validatedJwt: payload});
             if (payload !== null) {
                 if ('farmerId' in payload) {
                     (req as any)['farmerId'] = payload['farmerId'];

@@ -7,6 +7,7 @@ import {
 } from '../models/farmer';
 import {DB} from '../common/lib/db';
 import SqlString from 'sqlstring';
+import _ from 'lodash';
 
 class FarmInventoryRepo {
     private readonly table = CONSTANTS.tables.farmInventory;
@@ -90,20 +91,19 @@ class FarmInventoryRepo {
         )
     }
     updateFarmInventory = async (ledgerData: IFarmInventoryLedger, inventoryData: IFarmInventory) => {
-        const {farmId, productId, qty: delta, op, opening, createdAt, itemId} = ledgerData
-        const {priceInPaise, qty} = inventoryData;
+        const {farmId, productId} = ledgerData
         await DB.updateTxn([
             SqlString.format(
                 this.delete + ` where productId = ? and farmId = ?`,
                 [productId, farmId]
             ),
             SqlString.format(
-                this.insert + ` (farmId, priceInPaise, productId, qty, itemId) values(?, ?, ?, ?)`,
-                [farmId, priceInPaise, productId, qty, itemId]
+                this.insert + ` set ?`,
+                [_.omit(inventoryData, 'id')]
             ),
             SqlString.format(
-                this.insertLedger + ` (farmId, productId, qty, op, opening, createdAt, itemId) values(?, ?, ?, ?, ?, ?)`,
-                [farmId, productId, delta, op, opening, createdAt, itemId]
+                this.insertLedger + ` set ?`,
+                [_.omit(ledgerData, 'id')]
             ),
         ]);
     }
