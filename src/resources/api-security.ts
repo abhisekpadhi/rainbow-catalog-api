@@ -7,28 +7,27 @@ import {validateJwt} from '../common/lib/jwt';
 export async function authInterceptor(req: Request, res: Response, next: NextFunction) {
     LOG.info('authInterceptor called...');
     if (UnAuthenticatedRoutes.includes(req.path)) {
-        LOG.info('authInterceptor bypassed for unauthenticated route');
         next();
         return;
     }
-    try {
-        const jwt = req.headers.authorization;
-        if (jwt === undefined) {
-            throw 'Authorization header not found';
-        }
-        const payload = await validateJwt(jwt);
-        if (payload !== null) {
-            if ('farmerId' in payload) {
-                LOG.info('authInterceptor token validated');
-                (req as any)['farmerId'] = payload['farmerId'];
-                next();
-                return;
+    const jwt = req.headers?.authorization;
+    if (jwt !== undefined && jwt.length > 0) {
+        try {
+            const payload = await validateJwt(jwt);
+            if (payload !== null) {
+                if ('data' in payload) {
+                    if ('farmerId' in payload) {
+                        (req as any)['farmerId'] = payload['data']['farmerId'];
+                        next();
+                        return;
+                    }
+                }
             }
+        } catch (e) {
+            LOG.info({error: e});
         }
-    } catch (e) {
-        LOG.info({error: e});
     }
-
+    LOG.info('authInterceptor token invalid');
     res.status(401).send('Invalid token');
 }
 

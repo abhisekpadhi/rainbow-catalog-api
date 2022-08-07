@@ -2,7 +2,7 @@
 // handy functions to build ONDC response objects
 // ...
 
-import {generateRandomNDigits} from '../common/lib/jwt';
+import {generateRandomNDigits} from '../common/lib/idgen';
 
 export const makeAck = (ack = true, contextError?: {code: string, path: string, message: string}) => {
     const res: Partial<{message: any, error: any}> = {

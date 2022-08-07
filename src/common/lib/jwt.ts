@@ -1,33 +1,15 @@
 import * as jose from 'jose';
-import * as crypto from 'crypto';
-import {CONSTANTS} from '../../CONSTANTS';
 import {LOG} from './logger';
 
 const jwtSecret = process.env.JWT_SECRET!;
-const algorithm = process.env.CRYPTO_ALGO!; //algorithm to use
-const password = process.env.CRYPTO_SECRET!;
-const iv = crypto.randomBytes(16); // generate different ciphertext everytime
-const key = crypto.scryptSync(password, 'namak', 24); //create key
 
 export interface ITokenPayloadData {
     farmerId: string;
 }
 
-
-const random = (min: number, max: number) => Math.floor(Math.random() * (max - min)) + min;
-export const generateId = (size: number, symbls: string = CONSTANTS.symbols) => {
-    let res = '';
-    for (let i = 0; i < size; i++) {
-        res += symbls[random(0, symbls.length - 1)]
-    }
-    LOG.info(`generated id: ${res}`);
-    return res;
-}
-export const generateRandomNDigits = (n: number = CONSTANTS.otpLen) => generateId(n, CONSTANTS.digits);
-
 export const constructJwt = async (payload: { [k: string]: unknown }) => {
-    const expDelta = 30 * 24 * 60 * 60 * 1000; // 30 days
-    return new jose.SignJWT({data: encrypt(JSON.stringify(payload))})
+    const expDelta = 90 * 24 * 60 * 60 * 1000; // 90 days
+    return  new jose.SignJWT({data: payload})
         .setProtectedHeader({alg: 'HS256'})
         .setIssuedAt(Date.now())
         .setExpirationTime(Date.now() + expDelta)
@@ -39,25 +21,9 @@ export const validateJwt = async (token: string): Promise<ITokenPayloadData | nu
         const result = await jose.jwtVerify(token, Buffer.from(jwtSecret), {
             algorithms: ['HS256'],
         });
-
-        LOG.info({result});
-        const decrypted = JSON.parse(decrypt((result.payload as any).data))
-        LOG.info({decrypted});
-        return decrypted as ITokenPayloadData;
+        return result.payload.data as ITokenPayloadData;
     } catch (e) {
         LOG.info(`failed jwt validation, err:${e}`);
     }
     return null
 }
-
-const encrypt = (data: string) => {
-    const cipher = crypto.createCipheriv(algorithm, key, iv);
-    return cipher.update(data, 'utf8', 'hex') + cipher.final('hex'); // encrypted text
-}
-
-const decrypt = (encrypted: string) => {
-    const decipher = crypto.createDecipheriv(algorithm, key, iv);
-    return decipher.update(encrypted, 'hex', 'utf8') + decipher.final('utf8'); //deciphered text
-}
-
-
