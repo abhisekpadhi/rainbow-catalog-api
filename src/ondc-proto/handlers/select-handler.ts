@@ -7,6 +7,7 @@ import orderRepo from '../../repository/order-repo';
 import {BuyerOrder} from '../../models/farmer';
 import {makeEntityId} from '../response-makers';
 import dayjs from 'dayjs';
+import {CONSTANTS} from '../../CONSTANTS';
 
 const getSelectType = (payload: any) => {
     if (payload?.message?.order?.items !== undefined) {
@@ -96,7 +97,7 @@ const handleSelectItems = async (payload: any) => {
             "id": item.data!.itemId,
             "price" : {
                 "currency": "INR",
-                "value": (item.data!.priceInPaise/100).toString(),
+                "value": ((item.data!.priceInPaise + CONSTANTS.buyerFinderFee * item.data!.priceInPaise)/100).toString(),
             },
             "quantity": {
                 "selected": {

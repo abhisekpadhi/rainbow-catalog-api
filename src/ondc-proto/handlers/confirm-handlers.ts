@@ -9,6 +9,7 @@ import farmRepo from '../../repository/farm-repo';
 import _ from 'lodash';
 import {makeEntityId} from '../response-makers';
 import sellerOrderRepo from '../../repository/seller-order-repo';
+import {CONSTANTS} from '../../CONSTANTS';
 
 const getType = (payload: any) => {
     if (payload?.message?.order?.payment?.type !== undefined) {
@@ -101,7 +102,7 @@ const handleConfirm = async (payload: any) => {
     const itemsGroupedByProvider = _.groupBy(itemDetailsList, o => o.providerId);
     for (const providerId of Object.keys(itemsGroupedByProvider)) {
         const enrichedItems = itemsGroupedByProvider[providerId];
-        const subtotal = _.sumBy(enrichedItems, o => o.quantity.count * o.unitPriceInPaise);
+        const subtotal = _.sumBy(enrichedItems, o => o.quantity.count * (o.unitPriceInPaise + o.unitPriceInPaise * CONSTANTS.buyerFinderFee));
         const items = enrichedItems.map(o => _.omit(o, 'providerId', 'priceInPaise'))
         const quote = {
             "price": {

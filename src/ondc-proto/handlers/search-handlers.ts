@@ -7,6 +7,7 @@ import _ from 'lodash';
 import productCatalogRepo from '../../repository/product-catalog-repo';
 import {Farm, FarmInventory} from '../../models/farmer';
 import {makeEntityId} from '../response-makers';
+import {CONSTANTS} from '../../CONSTANTS';
 
 const categoryId = 'Fruits and Vegetables';
 
@@ -136,7 +137,7 @@ const _makeCatalogResponseFromFarmInventoryList = async (queryResult: FarmInvent
                 "location_id": `loc:${farmId}`,
                 "price": {
                     "currency": "INR",
-                    "value": inventoryItem.data!.priceInPaise / 100,
+                    "value": (inventoryItem.data!.priceInPaise + CONSTANTS.buyerFinderFee * inventoryItem.data!.priceInPaise) / 100 ,
                 },
                 "category_id": categoryId,
                 "fulfillment_id": 'fv_ff',
