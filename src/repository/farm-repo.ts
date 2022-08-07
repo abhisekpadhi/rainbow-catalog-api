@@ -56,6 +56,14 @@ class FarmRepo {
             Farm
         )
     }
+    insertFarm = async (data: IFarm) => {
+        await DB.update(
+            SqlString.format(
+                this.insert + ' SET ?',
+                [data]
+            )
+        );
+    }
     updateFarm = async (data: IFarm) => {
         await DB.update(
             SqlString.format(

@@ -5,7 +5,6 @@ import {validateJwt} from '../common/lib/jwt';
 
 // apart from few unauthenticated routes, rest all routes are supposed to authenticated
 export async function authInterceptor(req: Request, res: Response, next: NextFunction) {
-    LOG.info('authInterceptor called...');
     if (UnAuthenticatedRoutes.includes(req.path)) {
         next();
         return;
@@ -14,13 +13,12 @@ export async function authInterceptor(req: Request, res: Response, next: NextFun
     if (jwt !== undefined && jwt.length > 0) {
         try {
             const payload = await validateJwt(jwt);
+            LOG.info({validatedJwt: payload});
             if (payload !== null) {
-                if ('data' in payload) {
-                    if ('farmerId' in payload) {
-                        (req as any)['farmerId'] = payload['data']['farmerId'];
-                        next();
-                        return;
-                    }
+                if ('farmerId' in payload) {
+                    (req as any)['farmerId'] = payload['farmerId'];
+                    next();
+                    return;
                 }
             }
         } catch (e) {

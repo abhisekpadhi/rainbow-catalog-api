@@ -67,18 +67,25 @@ export const getFarmsOfFarmer = async (payload: {farmerId: number}) => {
 }
 
 export const createOrUpdateFarm = async (payload: IFarm) => {
+    let resultFarm: Farm | null = null;
     if (payload.id !== 0) {
         // update existing
         const existing = await FarmRepo.getByFarmId(payload.id);
         if (existing) {
-            const updated = new Farm({...existing.toPlainObject(), ...payload});
-            await FarmRepo.updateFarm(updated.toPlainObject()!);
+            const updated = new Farm({...existing.data!, ...payload});
+            resultFarm = updated;
+            LOG.info({msg: 'updating farm', f: updated});
+            await FarmRepo.updateFarm(updated.data!);
         }
     } else {
         // create new
-        const farm = new Farm(payload);
-        await FarmRepo.updateFarm(farm.toPlainObject()!);
+        const f = {...payload, providerId: makeEntityId('provider')};
+        LOG.info({msg: 'creating new farm', f});
+        const farm = new Farm(f);
+        resultFarm = farm
+        await FarmRepo.insertFarm(farm.data!);
     }
+    return {farm: resultFarm?.toPlainObject()};
 }
 
 export const getFarmPrefs = async (payload: {farmId: number}) => {

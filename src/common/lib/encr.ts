@@ -12,43 +12,32 @@
  * - we fetch salt against the uid from db, split payload by . (dot) to extract iv & encrypted data
  * - create decipher function using algo, key, iv & decrypt the data
  */
-import * as crypto from 'crypto';
-import {CONSTANTS} from '../../CONSTANTS';
-import {LOG} from './logger';
-
-const jwtSecret = process.env.JWT_SECRET!;
-const algorithm = process.env.CRYPTO_ALGO!; //algorithm to use
-const password = process.env.CRYPTO_SECRET!;
-
-const _generateKey = ( namak?: string ) => {
-    const salt = namak === undefined ? crypto.randomBytes(16) : namak; // generate random salt everytime
-    return {key: crypto.scryptSync(password, salt, 24), salt}; //create key
-}
-
-const _generateIv = () => {
-    return crypto.randomBytes(16); // generate different ciphertext everytime
-}
-
-const generateFreshSecrets = () => {
-    const iv = _generateIv();
-    const {key, salt} = _generateKey();
-    return {iv, salt, key};
-}
-
-export interface ITokenPayloadData {
-    farmerId: string;
-}
-
-const random = (min: number, max: number) => Math.floor(Math.random() * (max - min)) + min;
-export const generateId = (size: number, symbls: string = CONSTANTS.symbols) => {
-    let res = '';
-    for (let i = 0; i < size; i++) {
-        res += symbls[random(0, symbls.length - 1)]
-    }
-    LOG.info(`generated id: ${res}`);
-    return res;
-}
-export const generateRandomNDigits = (n: number = CONSTANTS.otpLen) => generateId(n, CONSTANTS.digits);
+// import * as crypto from 'crypto';
+// import {CONSTANTS} from '../../CONSTANTS';
+// import {LOG} from './logger';
+//
+// const jwtSecret = process.env.JWT_SECRET!;
+// const algorithm = process.env.CRYPTO_ALGO!; //algorithm to use
+// const password = process.env.CRYPTO_SECRET!;
+//
+// const _generateKey = ( namak?: string ) => {
+//     const salt = namak === undefined ? crypto.randomBytes(16) : namak; // generate random salt everytime
+//     return {key: crypto.scryptSync(password, salt, 24), salt}; //create key
+// }
+//
+// const _generateIv = () => {
+//     return crypto.randomBytes(16); // generate different ciphertext everytime
+// }
+//
+// const generateFreshSecrets = () => {
+//     const iv = _generateIv();
+//     const {key, salt} = _generateKey();
+//     return {iv, salt, key};
+// }
+//
+// export interface ITokenPayloadData {
+//     farmerId: string;
+// }
 
 // const _encrypt = (data: string, cipher: crypto.Cipher) => cipher.update(data, 'utf8', 'hex') + cipher.final('hex');
 // const _decrypt = (encrypted: string, decipher: crypto.Decipher) => decipher.update(encrypted, 'hex', 'utf8') + decipher.final('utf8');
