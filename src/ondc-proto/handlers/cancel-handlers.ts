@@ -4,6 +4,12 @@ import {PROTOCOL_CONTEXT} from '../models';
 import orderRepo from '../../repository/order-repo';
 import {BuyerOrder, BuyerOrderExtraData, OrderCancelledBy, OrderStatus} from '../../models/farmer';
 import dayjs from 'dayjs';
+import farmerRepo from '../../repository/farmer-repo';
+import {sendSms} from '../../common/lib/sms';
+import util from 'util';
+import farmInventoryRepo from '../../repository/farm-inventory-repo';
+import farmRepo from '../../repository/farm-repo';
+import _ from 'lodash';
 
 const getType = (payload: any) => {
     if (payload?.message?.cancellation_reason_id !== undefined) {
@@ -77,6 +83,48 @@ const handleCancelWithNoRefundTerms = async (payload: any, cancelledBy: OrderCan
             cancelReason: reason,
         } as BuyerOrderExtraData),
     }).data!);
+
+    // sms to providers
+    const message = 'Order cancelled, from %s (%s), details in DhoomNow app.';
+    const itemDetailsList: {
+        providerId: string,
+        unitPriceInPaise: number,
+        id: string,
+        quantity: {
+            count: number
+        }}[] = [];
+    const ondcItems: {id: string, quantity: {count: number}}[] = JSON.parse(order!.data!.items);
+    for (const item of ondcItems) {
+        if ('id' in item) {
+            const inventory = await farmInventoryRepo.getByMultipleItemIds([item['id']]);
+            if (inventory !== null) {
+                if (inventory!.length > 0) {
+                    const farmId = inventory![0].data?.farmId || 0;
+                    if (farmId > 0) {
+                        const farm = await farmRepo.getByFarmId(farmId)
+                        if (farm !== null) {
+                            itemDetailsList.push({
+                                ...item,
+                                providerId: farm.data?.providerId || '',
+                                unitPriceInPaise: inventory![0].data?.priceInPaise || 0,
+                            });
+                        }
+                    }
+                }
+            }
+        }
+    }
+    const itemsGroupedByProvider = _.groupBy(itemDetailsList, o => o.providerId);
+    const providers = Object.keys(itemsGroupedByProvider);
+    const farmers = await farmerRepo.getProviderIdPhoneMap(providers);
+    if (farmers !== null) {
+        for (const f of farmers) {
+            const customerName = JSON.parse(order.data!.billing)?.name || '';
+            const city = JSON.parse(order.data!.billing)?.address?.city || '';
+            await sendSms(util.format(message, customerName, city), f.data!.phone);
+        }
+    }
+
     return {
         "order": {
             "id": order!.data!.orderId,

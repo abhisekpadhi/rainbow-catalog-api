@@ -1,8 +1,8 @@
 import {bapCallback} from '../callback';
 import {LOG} from '../../common/lib/logger';
-import {PROTOCOL_CONTEXT} from '../models';
+import {_paymentResponse, PROTOCOL_CONTEXT} from '../models';
 import orderRepo from '../../repository/order-repo';
-import {BuyerOrder, OrderStatus, SellerOrder} from '../../models/farmer';
+import {BuyerOrder, IInventoryUpdateRequest, OndcContext, OrderStatus, SellerOrder} from '../../models/farmer';
 import dayjs from 'dayjs';
 import farmInventoryRepo from '../../repository/farm-inventory-repo';
 import farmRepo from '../../repository/farm-repo';
@@ -10,6 +10,10 @@ import _ from 'lodash';
 import {makeEntityId} from '../response-makers';
 import sellerOrderRepo from '../../repository/seller-order-repo';
 import {CONSTANTS} from '../../CONSTANTS';
+import ondcContextRepo from '../../repository/ondc-context-repo';
+import farmerRepo from '../../repository/farmer-repo';
+import {sendSms} from '../../common/lib/sms';
+import util from 'util';
 
 const getType = (payload: any) => {
     if (payload?.message?.order?.payment?.type !== undefined) {
@@ -52,11 +56,6 @@ const _makeEmptyResponse = () => {
             "payment": {}
         }
     }
-}
-
-const _paymentResponse = {
-    "type": "ON-FULFILLMENT",
-    "status": "NOT-PAID"
 }
 
 const handleConfirm = async (payload: any) => {
@@ -129,6 +128,26 @@ const handleConfirm = async (payload: any) => {
             orderStatus: OrderStatus.created,
         });
         await sellerOrderRepo.insertOrder(so.data!);
+    }
+
+    // save context object in db
+    if (ctxTxnId.length > 0) {
+        await ondcContextRepo.addCtx(new OndcContext({
+            ctxTxnId,
+            ctx: JSON.stringify(payload?.context || {}),
+        }).data!)
+    }
+
+    // sms to providers
+    const message = 'Received ONDC order from %s (%s), details in DhoomNow app.';
+    const providers = Object.keys(itemsGroupedByProvider);
+    const farmers = await farmerRepo.getProviderIdPhoneMap(providers);
+    if (farmers!== null) {
+        for (const f of farmers) {
+            const customerName = JSON.parse(order.data!.billing)?.name || '';
+            const city = JSON.parse(order.data!.billing)?.address?.city || '';
+            await sendSms(util.format(message, customerName, city), f.data!.phone);
+        }
     }
 
     return {

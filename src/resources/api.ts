@@ -1,8 +1,14 @@
 import express, {Request, Response} from 'express';
 import {Responder} from '../common/lib/responder';
-import {FarmerLoginSchema, FarmerSchema, FarmSchema, InventoryUpdateRequestSchema} from '../models/farmer';
 import {
-    createOrUpdateFarm,
+    FarmerLoginSchema,
+    FarmerSchema,
+    FarmSchema,
+    InventoryUpdateRequestSchema,
+    SellerOrderStatusUpdateRequestSchema
+} from '../models/farmer';
+import {
+    createOrUpdateFarm, getFarmerOrders,
     getFarmInventory,
     getFarmPrefs,
     getFarmsOfFarmer,
@@ -11,8 +17,8 @@ import {
     login,
     otpRequest,
     updateCatalog,
-    updateInventory
-} from '../workflows/account-worflows';
+    updateFarmInventory, updateSellerOrderStatus
+} from '../workflows/farmer-worflows';
 import {LOG} from '../common/lib/logger';
 import multer  from 'multer';
 import * as fs from 'fs';
@@ -53,9 +59,16 @@ const RequestPathHandlerMapping: {[k: string]: { hf: (payload: any) => any  | un
         hf: getInventoryLedger
     },
     'post:/inventory/update': {
-        hf: updateInventory,
+        hf: updateFarmInventory,
         s: InventoryUpdateRequestSchema
     },
+    'get:/seller/orders': {
+        hf: getFarmerOrders,
+    },
+    'post:/seller/orders/status': {
+        hf: updateSellerOrderStatus,
+        s: SellerOrderStatusUpdateRequestSchema,
+    }
 }
 
 const commonHandler = async (req: Request, res: Response) => {

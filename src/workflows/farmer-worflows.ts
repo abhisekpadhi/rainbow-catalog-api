@@ -1,9 +1,17 @@
 import {
     Farm,
     IFarm,
-    IFarmer, IFarmerLoginRequest, IFarmInventory, IFarmInventoryLedger,
-    IFarmPrefs, IInventoryResponse, IInventoryUpdateRequest,
+    IFarmer,
+    IFarmerLoginRequest,
+    IFarmInventory,
+    IFarmInventoryLedger,
+    IFarmPrefs,
+    IInventoryResponse,
+    IInventoryUpdateRequest,
     IProductCatalog,
+    ISellerOrderResponse,
+    ISellerOrderStatusUpdateRequestSchema,
+    OrderStatus,
     ProductCatalog,
     ProductCatalogSchema
 } from '../models/farmer';
@@ -12,7 +20,9 @@ import FarmRepo from '../repository/farm-repo';
 import FarmPrefsRepo from '../repository/farm-prefs-repo';
 import {LOG} from '../common/lib/logger';
 import ProductCatalogRepo from '../repository/product-catalog-repo';
+import productCatalogRepo from '../repository/product-catalog-repo';
 import FarmInventoryRepo from '../repository/farm-inventory-repo';
+import farmInventoryRepo from '../repository/farm-inventory-repo';
 import {cache} from '../common/clients';
 import {makeEntityId} from '../ondc-proto/response-makers';
 import {generateRandomNDigits} from '../common/lib/idgen';
@@ -20,6 +30,12 @@ import {constructJwt} from '../common/lib/jwt';
 import {CONSTANTS} from '../CONSTANTS';
 import _ from 'lodash';
 import {TaskQRedisImpl} from '../common/lib/taskq';
+import sellerOrderRepo from '../repository/seller-order-repo';
+import orderRepo from '../repository/order-repo';
+import dayjs from 'dayjs';
+import {_paymentResponse, PROTOCOL_CONTEXT} from '../ondc-proto/models';
+import {bapCallback} from '../ondc-proto/callback';
+import ondcContextRepo from '../repository/ondc-context-repo';
 
 const getOtpCacheKey = (phone: string) => 'otp:'+phone;
 
@@ -85,7 +101,7 @@ export const createOrUpdateFarm = async (payload: IFarm) => {
         resultFarm = farm
         await FarmRepo.insertFarm(farm.data!);
     }
-    return {farm: resultFarm?.toPlainObject()};
+    return {farm: resultFarm?.data};
 }
 
 export const getFarmPrefs = async (payload: {farmId: number}) => {
@@ -207,15 +223,14 @@ export const getInventoryLedger = async (payload: {farmId: number}) => {
     return {ledger}
 }
 
-export const updateInventory = async (payload: IInventoryUpdateRequest) => {
-    LOG.info({msg: 'in updateInventory'});
+export const updateFarmInventory = async (payload: IInventoryUpdateRequest) => {
     const inventory = await FarmInventoryRepo.getInventorySku(payload.farmId, payload.productId);
     if (inventory === null && payload.op === 'remove') {
-        return "cannot remove from oos sku"
+        return {message: 'cannot remove from oos sku'}
     }
     if (inventory && inventory.data) {
         if (payload.op === 'remove' && payload.qty > inventory.data.qty) {
-            return "cannot remove more than available"
+            return {message: 'cannot remove more than available'}
         }
     }
     const opening = inventory?.data?.qty || 0
@@ -243,3 +258,106 @@ export const updateInventory = async (payload: IInventoryUpdateRequest) => {
     await FarmInventoryRepo.updateFarmInventory(ledgerEntry, inventoryUpdate)
     return {message: 'ok'};
 }
+
+const getItemIdToProductMap = async (itemIds: string[]) => {
+    const result: {[k: string]: ProductCatalog} | null = {};
+    const inventoryItems = await farmInventoryRepo.getByMultipleItemIds(itemIds);
+    const inventoryItemsGrouped = _.groupBy(inventoryItems, o => o.data!.itemId);
+    for (const itemId of Object.keys(inventoryItemsGrouped)) {
+        const product = await productCatalogRepo.getByProductId(inventoryItemsGrouped[itemId]![0]!.data!.productId);
+        if (product !== null) {
+            result[itemId] = product!
+        }
+    }
+    return result;
+}
+
+export const getFarmerOrders = async (payload: {providerId: string, status: OrderStatus[]}): Promise<ISellerOrderResponse[]> => {
+    const sos = await sellerOrderRepo.getOrdersOfFarmerByStatus(payload.providerId, payload.status);
+    if (sos === null) {
+        return [];
+    }
+    const result: ISellerOrderResponse[] = [];
+    for (const so of sos) {
+        const bo = await orderRepo.getOrderById(so.data!.buyerOrderId)
+        const soItems = JSON.parse(so.data!.items);
+        const itemIdToProductMap = await getItemIdToProductMap(soItems.map((o: any) => o.id));
+        const billing: any = JSON.parse(bo!.data!.billing);
+        const addr: any = JSON.parse(billing.address);
+        const deliveryAddr = `${addr.door} ${addr.name} ${addr.locality} ${addr.city} ${addr.state} ${addr.area_code}`
+        const customer = `${billing.name}, ${billing.phone}, ${billing.email}`;
+        const ff = JSON.parse(bo!.data!.ff);
+        const customerNote = `${ff?.end?.instruction?.name} ${ff?.end?.instruction?.short_desc}`;
+        const itemList = soItems.map((soItem: any) => {
+            const product = itemIdToProductMap[soItem];
+            return {
+                itemName: `${product.data?.productName}  ${product?.data?.variant} ${product.data?.grading} ${product?.data?.packSize}`,
+                qty: soItem.quantity.selected.count,
+                picUrl: product.data?.imageUrl,
+            }
+        })
+        result.push({
+            sellerOrderId: so.data?.sellerOrderId || '',
+            createdAt: so.data?.createdAt || 0,
+            status: so.data?.orderStatus || '',
+            deliveryAddress: deliveryAddr,
+            customer,
+            customerNote,
+            itemList
+        })
+    }
+    return result;
+}
+
+export const updateSellerOrderStatus = async (payload: ISellerOrderStatusUpdateRequestSchema) => {
+    await sellerOrderRepo.updateStatus(payload.orderId, payload.status);
+    const so = await sellerOrderRepo.getOrderSellerOrderId(payload.orderId);
+    let shouldCallBap = false;
+
+    if (so) {
+        // mark buyer order delivered only if all seller orders are delivered
+        if (payload.status === OrderStatus.delivered) {
+            const allSos = await sellerOrderRepo.getByBuyerOrderId(so.data!.buyerOrderId);
+            if (allSos) {
+                if (_.every(_.omitBy(allSos, o => o.data!.sellerOrderId === payload.orderId), o => o.data!.orderStatus === OrderStatus.delivered)) {
+                    await orderRepo.updateStatus(so.data!.buyerOrderId, payload.status);
+                    shouldCallBap = true;
+                    return;
+                }
+            }
+        } else {
+            await orderRepo.updateStatus(so.data!.buyerOrderId, payload.status);
+            shouldCallBap = true;
+        }
+        // notify buyer app
+        if (shouldCallBap) {
+            const order = await orderRepo.getOrderById(so.data!.buyerOrderId);
+            if (order) {
+                const respone = {
+                    "order": {
+                        "id": order!.data!.orderId,
+                        "state": OrderStatus.created,
+                        "items": JSON.parse(order!.data!.items),
+                        "billing": JSON.parse(order!.data!.billing),
+                        "fulfillment": JSON.parse(order!.data!.ff),
+                        "quote": JSON.parse(order!.data!.quote),
+                        "payment": _paymentResponse,
+                        "created_at": dayjs(order!.data!.createdAt).toDate().toISOString(),
+                        "updated_at": dayjs().toDate().toISOString(),
+                    }
+                }
+                const ctx = await ondcContextRepo.getCtx(order.data!.ctxTxnId);
+                if (ctx) {
+                    await bapCallback(
+                        PROTOCOL_CONTEXT.ON_STATUS,
+                        {
+                            context: {...JSON.parse(ctx.data!.ctx), timestamp: dayjs().toISOString()},
+                            message: respone
+                        });
+                }
+            }
+        }
+    } else {
+        return {message: 'seller order not found', status: 404}
+    }
+};

@@ -181,3 +181,8 @@ export class OndcPayloadContext extends BaseDTO<IOndcPayloadContext> {
         super(OndcPayloadContextSchema.parse(payload));
     }
 }
+
+export const _paymentResponse = {
+    "type": "ON-FULFILLMENT",
+    "status": "NOT-PAID"
+}

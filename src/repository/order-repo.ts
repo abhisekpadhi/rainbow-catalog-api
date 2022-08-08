@@ -1,6 +1,6 @@
 import {CONSTANTS} from '../CONSTANTS';
 import {
-    IBuyerOrder, BuyerOrder
+    IBuyerOrder, BuyerOrder, SellerOrder
 } from '../models/farmer';
 import {DB} from '../common/lib/db';
 import SqlString from 'sqlstring';
@@ -11,7 +11,6 @@ class OrderRepo {
     private readonly columns = "orderId, customerId, ctxTxnId, createdAt, orderStatus, refundTerms, ff, billing, quote, items, extraData, cancellation";
     private readonly insert = `INSERT INTO ${this.table} `;
     private readonly update = `UPDATE ${this.table} `;
-
     getOrderByCtxTxnId = async (ctxTxnId: string) => {
         return DB.get<BuyerOrder>(
             SqlString.format(
@@ -48,6 +47,15 @@ class OrderRepo {
                 this.update + ` set ?`,
                 [_.omit(data, 'id')]
             ),
+        ]);
+    }
+
+    updateStatus = async (orderId: string, status: string) => {
+        await  DB.updateTxn([
+            SqlString.format(
+                this.update +  ' SET orderStatus = ? WHERE orderId = ?',
+                [status, orderId]
+            )
         ]);
     }
 }

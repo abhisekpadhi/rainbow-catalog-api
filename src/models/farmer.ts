@@ -239,3 +239,43 @@ export class OrderPayment extends BaseDTO<IOrderPayment> {
     }
 }
 
+export interface ISellerOrderResponse {
+    sellerOrderId: string;
+    createdAt: number;
+    status: string;
+    deliveryAddress: string;
+    customer: string;
+    customerNote: string;
+    itemList: {itemName: string, qty: number, picUrl: string}[];
+}
+
+export const SellerOrderStatusUpdateRequestSchema = BaseSchema.extend({
+    orderId: entityIdSchema.removeDefault(),
+    status: z.nativeEnum(OrderStatus),
+});
+
+export type ISellerOrderStatusUpdateRequestSchema = z.infer<typeof SellerOrderStatusUpdateRequestSchema>;
+
+export const OndcContextSchema = BaseSchema.extend({
+    ctxTxnId: z.string().max(255).default(''),
+    ctx: z.string().default(''),
+    createdAt: z.number().default(dayjs().valueOf())
+});
+
+export type IOndcContext = z.infer<typeof OndcContextSchema>;
+
+export class OndcContext extends BaseDTO<IOndcContext> {
+    constructor(payload: Partial<IOndcContext>) {
+        super(OndcContextSchema.parse(payload));
+    }
+}
+
+export interface IProviderToFarmerMapping extends IFarmer {
+    providerId: string;
+}
+
+export class ProviderToFarmer extends BaseDTO<IProviderToFarmerMapping> {
+    constructor(payload: IProviderToFarmerMapping) {
+        super(payload);
+    }
+}

@@ -27,6 +27,7 @@ export const CONSTANTS = Object.freeze({
         sellerOrder: 'sellerOrder',
         orderPayment: 'orderPayment',
         rating: 'rating',
+        ondcContext: 'ondcContext',
     },
     response: {
         ok: { message: 'ok' },

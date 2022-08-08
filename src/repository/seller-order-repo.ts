@@ -12,6 +12,16 @@ class SellerOrderRepo {
     private readonly insert = `INSERT INTO ${this.table} `;
     private readonly update = `UPDATE ${this.table} `;
 
+    getOrdersOfFarmerByStatus = (sellerProviderId: string, status: string[]) => {
+        return DB.all<SellerOrder>(
+            SqlString.format(
+                'select * from ?? where sellerProviderId = ? and orderStatus in (?)',
+                [this.table, sellerProviderId, status]
+            ),
+            SellerOrder
+        );
+    }
+
     getByBuyerOrderId = async (buyerOrderId: string) => {
         return DB.all<SellerOrder>(
             SqlString.format(
@@ -48,6 +58,15 @@ class SellerOrderRepo {
                 this.update + ` set ?`,
                 [_.omit(data, 'id')]
             ),
+        ]);
+    }
+
+    updateStatus = async (orderId: string, status: string) => {
+        await  DB.updateTxn([
+            SqlString.format(
+                this.update +  ' SET orderStatus = ? WHERE sellerOrderId = ?',
+                [status, orderId]
+            )
         ]);
     }
 }
