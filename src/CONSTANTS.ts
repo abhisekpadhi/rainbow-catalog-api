@@ -23,7 +23,7 @@ export const CONSTANTS = Object.freeze({
         farmPrefs: 'farmPrefs',
         productCatalog: 'productCatalog',
         ondcSubscriberInfo: 'ondcSubscriberInfo',
-        order: 'buyerOrder',
+        buyerOrder: 'buyerOrder',
         sellerOrder: 'sellerOrder',
         orderPayment: 'orderPayment',
         rating: 'rating',

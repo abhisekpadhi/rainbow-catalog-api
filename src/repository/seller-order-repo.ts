@@ -55,8 +55,8 @@ class SellerOrderRepo {
     updateOrder = async (data: ISellerOrder) => {
         await DB.updateTxn([
             SqlString.format(
-                this.update + ` set ?`,
-                [_.omit(data, 'id')]
+                this.update + ` set ? where sellerOrderId = ?`,
+                [_.omit(data, 'id'), data.sellerOrderId]
             ),
         ]);
     }

@@ -109,6 +109,7 @@ export const searchHandler = async (payload: any) => {
 
 // todo: hit cache first then db
 const _getFarmById = async (farmId: string) => {
+    LOG.info({msg: `getFarmById ${farmId}`});
     return await farmRepo.getByFarmId(parseInt(farmId, 10))
 }
 
@@ -120,15 +121,17 @@ const _getProduct = async (productId: string) => {
 
 const _makeCatalogResponseFromFarmInventoryList = async (queryResult: FarmInventory[]) => {
     const queryResultByFarm = _.groupBy(queryResult, o => o.data!.farmId);
-    LOG.info({msg: 'queryResultByFarm', queryResultByFarm});
+    LOG.info({queryResultByFarm});
     const providers = [];
     for (const farmId of Object.keys(queryResultByFarm)) {
         const farm = await _getFarmById(farmId);
+        LOG.info({farmData: farm?.data});
         const farmItems = queryResultByFarm[farmId];
         LOG.info({farmItems});
         const itemsAsync = farmItems.map( async (inventoryItem) => {
             const product = await _getProduct(inventoryItem.data!.productId);
-            LOG.info({product});
+            LOG.info({product: product?.data});
+            LOG.info({inventoryItem: inventoryItem.data});
             return {
                 "id": inventoryItem.data!.itemId,
                 "descriptor": {

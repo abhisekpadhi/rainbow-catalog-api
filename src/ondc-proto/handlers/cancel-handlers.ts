@@ -91,9 +91,16 @@ const handleCancelWithNoRefundTerms = async (payload: any, cancelledBy: OrderCan
         unitPriceInPaise: number,
         id: string,
         quantity: {
-            count: number
-        }}[] = [];
-    const ondcItems: {id: string, quantity: {count: number}}[] = JSON.parse(order!.data!.items);
+            selected: {
+                count: number
+            }
+        },
+        price: {
+            currency: string,
+            value: string,
+        },
+    }[] = [];
+    const ondcItems: {id: string, quantity: {selected: {count: number}}, price: {currency: string, value: string}}[] = JSON.parse(order!.data!.items);
     for (const item of ondcItems) {
         if ('id' in item) {
             const inventory = await farmInventoryRepo.getByMultipleItemIds([item['id']]);

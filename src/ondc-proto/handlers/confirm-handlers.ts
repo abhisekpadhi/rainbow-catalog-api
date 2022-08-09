@@ -2,14 +2,13 @@ import {bapCallback} from '../callback';
 import {LOG} from '../../common/lib/logger';
 import {_paymentResponse, PROTOCOL_CONTEXT} from '../models';
 import orderRepo from '../../repository/order-repo';
-import {BuyerOrder, IInventoryUpdateRequest, OndcContext, OrderStatus, SellerOrder} from '../../models/farmer';
+import {BuyerOrder, OndcContext, OrderStatus, SellerOrder} from '../../models/farmer';
 import dayjs from 'dayjs';
 import farmInventoryRepo from '../../repository/farm-inventory-repo';
 import farmRepo from '../../repository/farm-repo';
 import _ from 'lodash';
 import {makeEntityId} from '../response-makers';
 import sellerOrderRepo from '../../repository/seller-order-repo';
-import {CONSTANTS} from '../../CONSTANTS';
 import ondcContextRepo from '../../repository/ondc-context-repo';
 import farmerRepo from '../../repository/farmer-repo';
 import {sendSms} from '../../common/lib/sms';
@@ -64,6 +63,7 @@ const handleConfirm = async (payload: any) => {
         return _makeEmptyResponse();
     }
     const order = await orderRepo.getOrderByCtxTxnId(ctxTxnId);
+    LOG.info({order: order?.data});
     if (order === null) {
         return _makeEmptyResponse();
     }
@@ -75,9 +75,16 @@ const handleConfirm = async (payload: any) => {
         unitPriceInPaise: number,
         id: string,
         quantity: {
-            count: number
-        }}[] = [];
-    const ondcItems: {id: string, quantity: {count: number}}[] = JSON.parse(order!.data!.items);
+            selected: {
+                count: number
+            }
+        },
+        price: {
+            currency: string,
+            value: string,
+        },
+    }[] = [];
+    const ondcItems: {id: string, quantity: {selected: {count: number}}, price: {currency: string, value: string}}[] = JSON.parse(order!.data!.items);
     for (const item of ondcItems) {
         if ('id' in item) {
             const inventory = await farmInventoryRepo.getByMultipleItemIds([item['id']]);
@@ -101,7 +108,7 @@ const handleConfirm = async (payload: any) => {
     const itemsGroupedByProvider = _.groupBy(itemDetailsList, o => o.providerId);
     for (const providerId of Object.keys(itemsGroupedByProvider)) {
         const enrichedItems = itemsGroupedByProvider[providerId];
-        const subtotal = _.sumBy(enrichedItems, o => o.quantity.count * (o.unitPriceInPaise + o.unitPriceInPaise * CONSTANTS.buyerFinderFee));
+        const subtotal = _.sumBy(enrichedItems, o => o.quantity.selected.count * parseFloat(o.price.value));
         const items = enrichedItems.map(o => _.omit(o, 'providerId', 'priceInPaise'))
         const quote = {
             "price": {
@@ -119,6 +126,7 @@ const handleConfirm = async (payload: any) => {
             ],
             "ttl": "P4D"
         }
+        LOG.info({enrichedItems, subtotal, items, quote});
         const so = new SellerOrder({
             sellerOrderId: makeEntityId('so'),
             sellerProviderId: providerId,

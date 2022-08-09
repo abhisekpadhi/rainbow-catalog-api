@@ -4,7 +4,7 @@ import {PROTOCOL_CONTEXT} from '../models';
 import farmInventoryRepo from '../../repository/farm-inventory-repo';
 import _ from 'lodash';
 import orderRepo from '../../repository/order-repo';
-import {BuyerOrder} from '../../models/farmer';
+import {BuyerOrder, OrderStatus} from '../../models/farmer';
 import {makeEntityId} from '../response-makers';
 import dayjs from 'dayjs';
 import {CONSTANTS} from '../../CONSTANTS';
@@ -56,8 +56,8 @@ const _makeEmptyResponse = (quote = {}, items = [], addons = {}, offers = {}) =>
     return {
         "order": {
             "items": items,
-            "add-ons": addons,
-            "offers": offers,
+            "add-ons": _.isEmpty(addons) ? null : addons,
+            "offers": _.isEmpty(offers) ? null : addons,
             "quote": quote
         }
     }
@@ -69,12 +69,16 @@ const handleSelectItems = async (payload: any) => {
         return _makeEmptyResponse();
     }
     const order = await orderRepo.getOrderByCtxTxnId(ctxTxnId);
+    LOG.info({ctxTxnId, order});
     const requestedItems: ISelectItem[] = payload?.message?.order?.items || [];
     if (requestedItems.length === 0) {
         // empty out the cart in db
         if (order !== null) {
-            const updatedOrder = new BuyerOrder({...order!.data, items: '', quote: ''});
-            await orderRepo.updateOrder(updatedOrder.data!);
+            if (order.data!.orderStatus === OrderStatus.active) {
+                const updatedOrder = new BuyerOrder({...order!.data, items: '', quote: ''});
+                await orderRepo.updateOrder(updatedOrder.data!);
+                LOG.info({msg: `cart emptied for  txnId ${ctxTxnId}`});
+            }
         }
         // respond
         return _makeEmptyResponse();
@@ -134,7 +138,22 @@ const handleSelectItems = async (payload: any) => {
         items: JSON.stringify(items),
         quote: JSON.stringify(quote),
     });
-    await (order === null ? orderRepo.insertOrder : orderRepo.updateOrder)(updatedOrder.data!)
+    let updateDb = false;
+    if (order !== null) {
+        if (order.data!.orderStatus === OrderStatus.active) {
+            LOG.info({msg: `order with ctxTxnId ${ctxTxnId} exists in Active state, will update`})
+            updateDb = true;
+        } else {
+            LOG.info({msg: `order for txnId ${ctxTxnId} already in Created state, will not update`});
+        }
+    } else {
+        LOG.info({msg: `new order with ctxTxnId ${ctxTxnId} will update`})
+        updateDb = true;
+    }
+    if (updateDb) {
+        await (order === null ? orderRepo.insertOrder : orderRepo.updateOrder)(updatedOrder.data!)
+        LOG.info({msg: 'order updated'});
+    }
     const emptyResponse = _makeEmptyResponse()
     return {
         ...emptyResponse,

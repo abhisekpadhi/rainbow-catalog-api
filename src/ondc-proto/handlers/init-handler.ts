@@ -121,6 +121,7 @@ const handleShareBilling = async (payload: any) => {
         ff: JSON.stringify(ff),
     }
     const updatedOrder = new BuyerOrder(updated);
+    LOG.info({updatedOrder});
     await orderRepo.updateOrder(updatedOrder.data!);
     // respond
     return  {

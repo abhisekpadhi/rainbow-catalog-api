@@ -210,7 +210,7 @@ export const SellerOrderSchema = BaseSchema.extend({
     items: z.string().default(''),
     quote: z.string().default(''),
     orderStatus: z.nativeEnum(OrderStatus).default(OrderStatus.created),
-    createdAt: z.number().default(dayjs().valueOf),
+    createdAt: z.number().default(dayjs().valueOf()),
     extraData: z.string().default(''),
 });
 

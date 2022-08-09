@@ -76,6 +76,7 @@ const commonHandler = async (req: Request, res: Response) => {
     const method = req.method.toLowerCase();
     const handler = RequestPathHandlerMapping[`${method}:${req.path}`];
     if (handler === undefined || handler === null || (method === 'post' && handler.s === undefined)) {
+        LOG.info({msg: 'commonHandler invalid request'});
         res.status(400).send('Invalid request');
         return;
     }

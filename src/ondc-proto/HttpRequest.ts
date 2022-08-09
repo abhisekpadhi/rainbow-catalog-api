@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, {AxiosRequestConfig} from 'axios';
 import {LOG} from '../common/lib/logger';
 
 /**
@@ -46,7 +46,7 @@ class HttpRequest {
             let result;
 
             if (this.method.toLowerCase() == 'get') {
-                const payload = {
+                const payload: AxiosRequestConfig = {
                     baseURL: this.baseUrl,
                     url: this.url,
                     method: this.method,
@@ -56,13 +56,13 @@ class HttpRequest {
                 LOG.info({msg: 'httpRequest GET', payload})
                 result = await axios(payload);
             } else {
-                const payload = {
+                const payload: AxiosRequestConfig = {
                     baseURL: this.baseUrl,
                     url: this.url,
                     method: this.method,
                     headers: headers,
                     timeout: 180000, // If the request takes longer than `timeout`, the request will be aborted.
-                    data: JSON.stringify(this.data)
+                    data: this.data,
                 }
                 LOG.info({msg: 'httpRequest POST', payload})
                 // Make server request using axios

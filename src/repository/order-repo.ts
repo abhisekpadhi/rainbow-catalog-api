@@ -1,13 +1,13 @@
 import {CONSTANTS} from '../CONSTANTS';
 import {
-    IBuyerOrder, BuyerOrder, SellerOrder
+    IBuyerOrder, BuyerOrder,
 } from '../models/farmer';
 import {DB} from '../common/lib/db';
 import SqlString from 'sqlstring';
 import _ from 'lodash';
 
 class OrderRepo {
-    private readonly table = CONSTANTS.tables.order;
+    private readonly table = CONSTANTS.tables.buyerOrder;
     private readonly columns = "orderId, customerId, ctxTxnId, createdAt, orderStatus, refundTerms, ff, billing, quote, items, extraData, cancellation";
     private readonly insert = `INSERT INTO ${this.table} `;
     private readonly update = `UPDATE ${this.table} `;
@@ -44,8 +44,8 @@ class OrderRepo {
     updateOrder = async (data: IBuyerOrder) => {
         await DB.updateTxn([
             SqlString.format(
-                this.update + ` set ?`,
-                [_.omit(data, 'id')]
+                this.update + ` set ? where ctxTxnId = ?`,
+                [_.omit(data, 'id'), data.ctxTxnId]
             ),
         ]);
     }

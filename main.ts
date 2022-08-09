@@ -8,10 +8,10 @@ import {DiganosticsApi} from './src/resources/diganostics-api';
 const port = process.env.PORT! as unknown as number;
 const host = process.env.HOST! as unknown as string;
 
-app.use('', RootRouter);
 app.use('/api', OndcRouter);
 app.use('/tracking', OndcTrackingRouter);
 app.use('/_', DiganosticsApi);
+app.use('', RootRouter);
 
 // start server
 app.listen(port, () => {
