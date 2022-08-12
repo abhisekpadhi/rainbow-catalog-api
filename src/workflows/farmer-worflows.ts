@@ -305,7 +305,7 @@ export const getFarmerOrders = async (payload: {providerId: string, status: Orde
     // LOG.info({payload});
     const sos = await sellerOrderRepo.getOrdersOfFarmerByStatus(payload.providerId, payload.status);
     if (sos === null) {
-        return [];
+        return { orders: []};
     }
     const result: ISellerOrderResponse[] = [];
     for (const so of sos) {
