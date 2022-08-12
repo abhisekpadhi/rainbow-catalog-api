@@ -1,18 +1,19 @@
 create table buyerOrder
 (
-    id          bigint auto_increment
+    id           bigint auto_increment
         primary key,
-    orderId     varchar(45)  null,
-    customerId  varchar(45)  null,
-    ctxTxnId    varchar(255) null,
-    createdAt   bigint       null,
-    orderStatus varchar(45)  null,
-    refundTerms varchar(45)  null,
-    ff          text         null,
-    billing     text         null,
-    quote       text         null,
-    items       text         null,
-    extraData   text         null
+    orderId      varchar(45)  null,
+    customerId   varchar(45)  null,
+    ctxTxnId     varchar(255) null,
+    createdAt    bigint       null,
+    orderStatus  varchar(45)  null,
+    refundTerms  varchar(45)  null,
+    ff           text         null,
+    billing      text         null,
+    quote        text         null,
+    items        text         null,
+    extraData    text         null,
+    cancellation text         null
 );
 
 create table farm
@@ -73,6 +74,15 @@ create table farmer
     phone      varchar(10) null
 );
 
+create table ondcContext
+(
+    id        bigint auto_increment
+        primary key,
+    ctxTxnId  varchar(255) null,
+    ctx       text         null,
+    createdAt bigint       null
+);
+
 create table ondcSubscriberInfo
 (
     id            bigint auto_increment
@@ -110,5 +120,19 @@ create table rating
         primary key,
     ctxTxnId varchar(255) null,
     payload  text         null
+);
+
+create table sellerOrder
+(
+    sellerProviderId varchar(45) null,
+    buyerOrderId     varchar(45) null,
+    items            text        null,
+    quote            text        null,
+    orderStatus      varchar(45) null,
+    createdAt        bigint      null,
+    extraData        text        null,
+    id               bigint auto_increment
+        primary key,
+    sellerOrderId    varchar(45) null
 );
 
