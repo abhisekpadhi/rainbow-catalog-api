@@ -92,15 +92,15 @@ class FarmInventoryRepo {
         const {farmId, productId} = ledgerData
         await DB.updateTxn([
             SqlString.format(
-                this.delete + ` where productId = ? and farmId = ?`,
+                this.delete + ' where productId = ? and farmId = ?',
                 [productId, farmId]
             ),
             SqlString.format(
-                this.insert + ` set ?`,
+                this.insert + ' set ?',
                 [_.omit(inventoryData, 'id')]
             ),
             SqlString.format(
-                this.insertLedger + ` set ?`,
+                this.insertLedger + ' set ?',
                 [_.omit(ledgerData, 'id')]
             ),
         ]);

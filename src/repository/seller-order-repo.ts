@@ -35,7 +35,7 @@ class SellerOrderRepo {
     getOrderSellerOrderId = async (orderId: string) => {
         return DB.get<SellerOrder>(
             SqlString.format(
-                `select * from ${this.table} where orderId = ?`,
+                `select * from ${this.table} where sellerOrderId = ?`,
                 [orderId]
             ),
             SellerOrder

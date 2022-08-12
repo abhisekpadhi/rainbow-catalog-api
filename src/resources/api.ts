@@ -3,7 +3,7 @@ import {Responder} from '../common/lib/responder';
 import {
     FarmerLoginSchema,
     FarmerSchema,
-    FarmSchema,
+    FarmSchema, InventoryPricingUpdateRequestSchema,
     InventoryUpdateRequestSchema,
     SellerOrderStatusUpdateRequestSchema
 } from '../models/farmer';
@@ -17,7 +17,7 @@ import {
     login,
     otpRequest,
     updateCatalog,
-    updateFarmInventory, updateSellerOrderStatus
+    updateFarmInventory, updateInventoryPricing, updateSellerOrderStatus
 } from '../workflows/farmer-worflows';
 import {LOG} from '../common/lib/logger';
 import multer  from 'multer';
@@ -61,6 +61,10 @@ const RequestPathHandlerMapping: {[k: string]: { hf: (payload: any) => any  | un
     'post:/inventory/update': {
         hf: updateFarmInventory,
         s: InventoryUpdateRequestSchema
+    },
+    'post:/inventory/update/price': {
+        hf: updateInventoryPricing,
+        s: InventoryPricingUpdateRequestSchema
     },
     'get:/seller/orders': {
         hf: getFarmerOrders,
