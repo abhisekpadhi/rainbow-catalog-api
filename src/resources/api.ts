@@ -76,7 +76,6 @@ const RequestPathHandlerMapping: {[k: string]: { hf: (payload: any) => any  | un
 }
 
 const commonHandler = async (req: Request, res: Response) => {
-    LOG.info({body:req.body});
     const method = req.method.toLowerCase();
     const handler = RequestPathHandlerMapping[`${method}:${req.path}`];
     if (handler === undefined || handler === null || (method === 'post' && handler.s === undefined)) {
