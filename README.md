@@ -1,6 +1,9 @@
 # rainbow-catalog
 API for smart cataloguing system for tech enablement of underserved farmers.
 
+## Related mobile app (react-native) here
+https://github.com/abhisekpadhi/rainbow-catalog-app
+
 ## tech
 - api: nodejs & expressjs
 - db: mysql
