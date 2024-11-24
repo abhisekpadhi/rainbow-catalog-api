@@ -11,4 +11,5 @@ export const UnAuthenticatedRoutes = [
     ApiRoutes.login,
     ApiRoutes.health,
     ApiRoutes.ping,
+    '/tracking'
 ]

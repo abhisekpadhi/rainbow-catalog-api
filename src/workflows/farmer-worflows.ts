@@ -302,7 +302,6 @@ const getItemIdToProductMap = async (itemIds: string[]) => {
 }
 
 export const getFarmerOrders = async (payload: {providerId: string, status: OrderStatus[]}) => {
-    // LOG.info({payload});
     const sos = await sellerOrderRepo.getOrdersOfFarmerByStatus(payload.providerId, payload.status);
     if (sos === null) {
         return { orders: []};
@@ -317,6 +316,7 @@ export const getFarmerOrders = async (payload: {providerId: string, status: Orde
         const deliveryAddr = `${addr.door} ${addr.name} ${addr.locality} ${addr.city} ${addr.state} ${addr.area_code}`
         const customer = `${billing.name}, ${billing.phone}, ${billing.email}`;
         const ff = JSON.parse(bo!.data!.ff);
+        LOG.info({ff});
         const customerNote = `${ff?.end?.instructions?.name || ''} - ${ff?.end?.instructions?.short_desc || ''}`;
         const itemList = soItems.map((soItem: any) => {
             const product = itemIdToProductMap[soItem.id];

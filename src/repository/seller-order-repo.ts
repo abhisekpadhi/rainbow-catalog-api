@@ -15,7 +15,7 @@ class SellerOrderRepo {
     getOrdersOfFarmerByStatus = (sellerProviderId: string, status: string[]) => {
         return DB.all<SellerOrder>(
             SqlString.format(
-                'select * from ?? where sellerProviderId = ? and orderStatus in (?)',
+                'select * from ?? where sellerProviderId = ? and orderStatus in (?) order by createdAt desc',
                 [this.table, sellerProviderId, status]
             ),
             SellerOrder

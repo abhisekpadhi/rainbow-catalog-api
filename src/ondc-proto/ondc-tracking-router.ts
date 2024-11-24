@@ -1,7 +1,6 @@
 import express, {Request, Response} from 'express';
 import {LOG} from '../common/lib/logger';
 import orderRepo from '../repository/order-repo';
-import {OrderStatus} from '../models/farmer';
 
 const router = express.Router();
 
@@ -17,7 +16,7 @@ const trackingHandler = async (req: Request, res: Response) => {
     }
     const data = {
         orderId: orderId,
-        status: OrderStatus.active,
+        status: order.data?.orderStatus,
     }
     return res.render('track', { data });
 };

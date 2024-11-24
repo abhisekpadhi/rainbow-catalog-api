@@ -5,6 +5,12 @@ import {validateJwt} from '../common/lib/jwt';
 
 // apart from few unauthenticated routes, rest all routes are supposed to authenticated
 export async function authInterceptor(req: Request, res: Response, next: NextFunction) {
+    //catch all for all bap callbacks pointed at us (used for demo, can be removed for prod)
+    LOG.info({path: req.path});
+    if (req.path.startsWith('/bap')) {
+        next();
+        return;
+    }
     if (UnAuthenticatedRoutes.includes(req.path)) {
         next();
         return;
